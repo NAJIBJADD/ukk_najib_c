@@ -1,15 +1,6 @@
 <?php
 require_once 'includes/autoload.php';
-
-try {
-    $db = Database::getInstance();
-    $pdo = $db->getConnection();
-    $password = '123456';
-    $hashed = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare("UPDATE users SET password = ?");
-    $stmt->execute([$hashed]);
-    echo "Password berhasil direset ke 123456. <a href='login.php'>Login</a>";
-} catch (Exception $e) {
-    echo "Error: " . $e->getMessage();
-}
-?>
+$pdo = Database::getInstance()->getConnection();
+$hash = password_hash('123456', PASSWORD_DEFAULT);
+$pdo->prepare("UPDATE users SET password = ?")->execute([$hash]);
+echo "Password semua user direset ke 123456. <a href='login.php'>Login</a>";

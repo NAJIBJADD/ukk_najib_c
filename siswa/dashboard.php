@@ -6,9 +6,12 @@ if ($_SESSION['role'] != 'siswa') {
 }
 
 $loanObj = new Loan();
+$requestObj = new Request();
+$itemObj = new Item();
 $siswaId = $_SESSION['user_id'];
 $has_late = $loanObj->checkLateLoan($siswaId);
 $loans = $loanObj->getLoansByStudent($siswaId);
+$requests = $requestObj->getRequestsByStudent($siswaId);
 ?>
 <?php include '../includes/header.php'; ?>
 <?php include '../includes/navbar.php'; ?>
@@ -23,10 +26,10 @@ $loans = $loanObj->getLoansByStudent($siswaId);
 <?php endif; ?>
 
 <div class="container mt-4">
-    <!-- Kartu QR Code Identitas Siswa (hanya ID) -->
+    <!-- Kartu QR Code Identitas Siswa -->
     <div class="card shadow mb-4">
         <div class="card-header bg-info text-white">
-            <h5><i class="fas fa-id-card"></i> Kartu Identitas Siswa (QR Code)</h5>
+            <h5><i class="fas fa-id-card"></i> Kartu Identitas Siswa</h5>
         </div>
         <div class="card-body text-center">
             <p>Scan QR code di bawah ini oleh petugas untuk identifikasi Anda.</p>
@@ -36,35 +39,48 @@ $loans = $loanObj->getLoansByStudent($siswaId);
                 NIS: <?= htmlspecialchars($_SESSION['nis'] ?? '-') ?><br>
                 (<?= htmlspecialchars($_SESSION['username']) ?> | ID: <?= $_SESSION['user_id'] ?>)
             </p>
-            <button class="btn btn-sm btn-secondary" onclick="printQRCode()">
-                <i class="fas fa-print"></i> Cetak QR Code
-            </button>
+            <div class="mt-3">
+                <button class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#qrModal">
+                    <i class="fas fa-expand"></i> Perbesar QR Code
+                </button>
+                <button class="btn btn-sm btn-success" id="downloadQRBtn">
+                    <i class="fas fa-download"></i> Download QR
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="printQRCode()">
+                    <i class="fas fa-print"></i> Cetak QR Code
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Kartu Riwayat Peminjaman -->
-    <div class="card shadow">
+    <!-- Riwayat Peminjaman Aktif & Selesai -->
+    <div class="card shadow mb-4">
         <div class="card-header bg-success text-white">
-            <h4><i class="fas fa-hand-holding"></i> Dashboard Siswa</h4>
+            <h4><i class="fas fa-hand-holding"></i> Riwayat Peminjaman</h4>
         </div>
         <div class="card-body">
-            <a href="scan_loan.php" class="btn btn-primary mb-3">
-                <i class="fas fa-qrcode"></i> Pinjam Barang (Scan Barcode)
-            </a>
-            <h5>Riwayat Peminjaman Saya</h5>
             <div class="table-responsive">
                 <table class="table table-bordered table-striped">
                     <thead class="table-dark">
-                        <tr><th>Barang</th><th>Barcode Barang</th><th>Tgl Pinjam</th><th>Batas Waktu</th><th>Status</th><th>Denda</th></tr>
+                        <tr>
+                            <th>Barang</th>
+                            <th>Kategori</th>
+                            <th>Tgl Pinjam</th>
+                            <th>Batas Waktu</th>
+                            <th>Status</th>
+                            <th>Denda</th>
+                        </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($loans as $loan): 
+                            $item = $itemObj->getItemById($loan['id_item']);
+                            $kategori = $item['kategori'] ?? '-';
                             $is_late = ($loan['status'] == 'dipinjam' && strtotime($loan['batas_waktu']) < time());
                             $badge = $is_late ? 'danger' : ($loan['status'] == 'dipinjam' ? 'warning' : 'success');
                         ?>
                         <tr class="<?= $is_late ? 'table-danger' : '' ?>">
                             <td><?= htmlspecialchars($loan['nama_item']) ?></td>
-                            <td><?= htmlspecialchars($loan['barcode']) ?></td>
+                            <td><?= htmlspecialchars($kategori) ?></td>
                             <td><?= $loan['tgl_pinjam'] ?></td>
                             <td><?= $loan['batas_waktu'] ?></td>
                             <td><span class="badge bg-<?= $badge ?>"><?= strtoupper($loan['status']) ?></span></td>
@@ -79,15 +95,79 @@ $loans = $loanObj->getLoansByStudent($siswaId);
             </div>
         </div>
     </div>
+
+    <!-- Riwayat Permintaan (Termasuk Ditolak) -->
+    <div class="card shadow">
+        <div class="card-header bg-warning text-dark">
+            <h4><i class="fas fa-envelope"></i> Riwayat Permintaan Peminjaman</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Barang</th>
+                            <th>Kategori</th>
+                            <th>Tgl Request</th>
+                            <th>Status</th>
+                            <th>Catatan / Alasan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($requests as $req): 
+                            $item = $itemObj->getItemById($req['id_item']);
+                            $kategori = $item['kategori'] ?? '-';
+                            $status_badge = '';
+                            if ($req['status'] == 'pending') $status_badge = 'warning';
+                            elseif ($req['status'] == 'disetujui') $status_badge = 'success';
+                            else $status_badge = 'danger';
+                        ?>
+                        <tr>
+                            <td><?= htmlspecialchars($req['nama_item']) ?></td>
+                            <td><?= htmlspecialchars($kategori) ?></td>
+                            <td><?= $req['tgl_request'] ?></td>
+                            <td><span class="badge bg-<?= $status_badge ?>"><?= strtoupper($req['status']) ?></span></td>
+                            <td><?= htmlspecialchars($req['catatan'] ?: '-') ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($requests)): ?>
+                            <tr><td colspan="5" class="text-center">Belum ada permintaan</td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+            <small class="text-muted fst-italic">* Permintaan yang ditolak tidak dikenakan denda. Denda hanya berlaku pada peminjaman yang sudah disetujui dan terlambat/rusak/hilang.</small>
+        </div>
+    </div>
+</div>
+
+<!-- Modal QR Code Besar -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center">
+            <div class="modal-header">
+                <h5 class="modal-title">QR Code Identitas Siswa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="qrBig" style="display: inline-block;"></div>
+                <p class="mt-3">
+                    <strong><?= htmlspecialchars($_SESSION['nama']) ?></strong><br>
+                    ID: <?= $_SESSION['user_id'] ?>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Library QR Code Generator -->
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
-    // Hanya ID siswa yang di-encode (angka)
     let studentId = "<?= $_SESSION['user_id'] ?>";
-    let qrData = studentId;   // Tidak pakai nama
-    
+    let qrData = studentId;
     let qrcode = new QRCode(document.getElementById("qrcode"), {
         text: qrData,
         width: 150,
@@ -111,6 +191,28 @@ $loans = $loanObj->getLoansByStudent($siswaId);
         win.print();
         win.close();
     }
+
+    document.getElementById('downloadQRBtn').addEventListener('click', function() {
+        let qrImg = document.querySelector('#qrcode img');
+        if (qrImg) {
+            let link = document.createElement('a');
+            link.download = 'qr_siswa.png';
+            link.href = qrImg.src;
+            link.click();
+        }
+    });
+
+    $('#qrModal').on('show.bs.modal', function () {
+        document.getElementById('qrBig').innerHTML = '';
+        new QRCode(document.getElementById('qrBig'), {
+            text: studentId,
+            width: 250,
+            height: 250,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    });
 </script>
 
 <style>
