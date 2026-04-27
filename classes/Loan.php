@@ -11,12 +11,21 @@ class Loan {
     }
     
     public function createLoan($siswaId, $itemId) {
+        // Cek stok terlebih dahulu
+        $itemObj = new Item();
+        $item = $itemObj->getItemById($itemId);
+        if (!$item || $item['stok'] <= 0) {
+            return false; // stok habis
+        }
+        
         $tgl_pinjam = date('Y-m-d H:i:s');
         $batas_waktu = date('Y-m-d H:i:s', strtotime('+7 days'));
         $stmt = $this->db->prepare("INSERT INTO loans (id_siswa, id_item, tgl_pinjam, batas_waktu, status) VALUES (?, ?, ?, ?, 'dipinjam')");
         if ($stmt->execute([$siswaId, $itemId, $tgl_pinjam, $batas_waktu])) {
-            $item = new Item();
-            $item->updateStatus($itemId, 'dipinjam');
+            // Kurangi stok
+            $itemObj->kurangiStok($itemId, 1);
+            // Update status item jika stok habis
+            $itemObj->updateStatus($itemId, 'dipinjam');
             return true;
         }
         return false;
@@ -52,7 +61,6 @@ class Loan {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    // === METHOD BARU UNTUK PENCARIAN BERDASARKAN ID ATAU NIS SISWA ===
     public function getLoansByStudentIdOrNis($search) {
         $stmt = $this->db->prepare("SELECT l.*, u.nama_lengkap AS siswa, u.nis, i.nama_item 
                                     FROM loans l 
@@ -85,10 +93,15 @@ class Loan {
         $result = $stmt->execute([$tgl_kembali, $totalDenda, $statusReturn, $loanId]);
         
         if ($result) {
-            $item = new Item();
-            if ($statusReturn == 'kembali') $item->updateStatus($loan['id_item'], 'tersedia');
-            elseif ($statusReturn == 'rusak') $item->updateStatus($loan['id_item'], 'rusak');
-            elseif ($statusReturn == 'hilang') $item->updateStatus($loan['id_item'], 'hilang');
+            $itemObj = new Item();
+            if ($statusReturn == 'kembali') {
+                $itemObj->tambahStok($loan['id_item'], 1);
+                $itemObj->updateStatus($loan['id_item'], 'tersedia');
+            } elseif ($statusReturn == 'rusak') {
+                $itemObj->updateStatus($loan['id_item'], 'rusak');
+            } elseif ($statusReturn == 'hilang') {
+                $itemObj->updateStatus($loan['id_item'], 'hilang');
+            }
         }
         return $result;
     }
@@ -128,6 +141,22 @@ class Loan {
         } else return [];
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Hapus peminjaman (untuk admin setelah request petugas)
+    public function deleteLoan($loanId) {
+        $loan = $this->getLoanById($loanId);
+        if (!$loan) return false;
+        
+        // Jika status masih dipinjam, stok harus dikembalikan
+        if ($loan['status'] == 'dipinjam') {
+            $itemObj = new Item();
+            $itemObj->tambahStok($loan['id_item'], 1);
+            $itemObj->updateStatus($loan['id_item'], 'tersedia');
+        }
+        
+        $stmt = $this->db->prepare("DELETE FROM loans WHERE id = ?");
+        return $stmt->execute([$loanId]);
     }
 }
 ?>

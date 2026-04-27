@@ -18,20 +18,20 @@ class Item {
     }
     
     public function getItemByBarcode($barcode) {
-        $stmt = $this->db->prepare("SELECT * FROM items WHERE barcode = ? AND status = 'tersedia'");
+        $stmt = $this->db->prepare("SELECT * FROM items WHERE barcode = ? AND status = 'tersedia' AND stok > 0");
         $stmt->execute([$barcode]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
-    public function addItem($nama, $kategori, $deskripsi) {
+    public function addItem($nama, $kategori, $deskripsi, $stok = 1) {
         $barcode = 'BAR-' . strtoupper(uniqid());
-        $stmt = $this->db->prepare("INSERT INTO items (barcode, nama_item, kategori, deskripsi) VALUES (?, ?, ?, ?)");
-        return $stmt->execute([$barcode, $nama, $kategori, $deskripsi]);
+        $stmt = $this->db->prepare("INSERT INTO items (barcode, nama_item, kategori, deskripsi, stok) VALUES (?, ?, ?, ?, ?)");
+        return $stmt->execute([$barcode, $nama, $kategori, $deskripsi, $stok]);
     }
     
-    public function updateItem($id, $nama, $kategori, $deskripsi, $status) {
-        $stmt = $this->db->prepare("UPDATE items SET nama_item = ?, kategori = ?, deskripsi = ?, status = ? WHERE id = ?");
-        return $stmt->execute([$nama, $kategori, $deskripsi, $status, $id]);
+    public function updateItem($id, $nama, $kategori, $deskripsi, $status, $stok) {
+        $stmt = $this->db->prepare("UPDATE items SET nama_item = ?, kategori = ?, deskripsi = ?, status = ?, stok = ? WHERE id = ?");
+        return $stmt->execute([$nama, $kategori, $deskripsi, $status, $stok, $id]);
     }
     
     public function deleteItem($id) {
@@ -42,6 +42,25 @@ class Item {
     public function updateStatus($id, $status) {
         $stmt = $this->db->prepare("UPDATE items SET status = ? WHERE id = ?");
         return $stmt->execute([$status, $id]);
+    }
+    
+    public function kurangiStok($id, $jumlah = 1) {
+        $stmt = $this->db->prepare("UPDATE items SET stok = stok - ? WHERE id = ? AND stok >= ?");
+        $stmt->execute([$jumlah, $id, $jumlah]);
+        $affected = $stmt->rowCount();
+        if ($affected) {
+            $stmt2 = $this->db->prepare("UPDATE items SET status = 'habis' WHERE id = ? AND stok = 0");
+            $stmt2->execute([$id]);
+        }
+        return $affected > 0;
+    }
+    
+    public function tambahStok($id, $jumlah = 1) {
+        $stmt = $this->db->prepare("UPDATE items SET stok = stok + ? WHERE id = ?");
+        $stmt->execute([$jumlah, $id]);
+        $stmt2 = $this->db->prepare("UPDATE items SET status = 'tersedia' WHERE id = ? AND stok > 0");
+        $stmt2->execute([$id]);
+        return $stmt->rowCount() > 0;
     }
 }
 ?>
