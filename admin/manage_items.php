@@ -13,8 +13,9 @@ if (isset($_POST['add'])) {
     $kategori  = $_POST['kategori'] ?? $_POST['kategori_manual'] ?? 'Umum';
     $deskripsi = $_POST['deskripsi'];
     $stok      = (int) ($_POST['stok'] ?? 1);
+    $harga     = (int) ($_POST['harga'] ?? 0);
 
-    if ($itemObj->addItem($nama, $kategori, $deskripsi, $stok)) {
+    if ($itemObj->addItem($nama, $kategori, $deskripsi, $stok, $harga)) {
         $_SESSION['success'] = "Barang berhasil ditambahkan";
     } else {
         $_SESSION['error'] = "Gagal menambahkan barang";
@@ -67,6 +68,7 @@ $items = $itemObj->getAllItems();
                             <th class="border-0">Nama Barang</th>
                             <th class="border-0">Kategori</th>
                             <th class="border-0">Stok</th>
+                            <th class="border-0">Harga (Rp)</th>
                             <th class="border-0">Status</th>
                             <th class="border-0">Aksi</th>
                         </tr>
@@ -82,6 +84,7 @@ $items = $itemObj->getAllItems();
                                 <td><?= htmlspecialchars($item['nama_item']) ?></td>
                                 <td><?= htmlspecialchars($item['kategori'] ?? '-') ?></td>
                                 <td><?= $item['stok'] ?></td>
+                                <td>Rp <?= number_format($item['harga'], 0, ',', '.') ?></td>
                                 <td>
                                     <?php
                                     $status = $item['status'];
@@ -114,7 +117,7 @@ $items = $itemObj->getAllItems();
                                         <i class="fas fa-trash"></i> Hapus
                                     </a>
                                 </td>
-                            </tr>
+                            </table>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
@@ -153,6 +156,10 @@ $items = $itemObj->getAllItems();
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Stok</label>
                         <input type="number" name="stok" class="form-control rounded-pill" value="1" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Harga Barang (Rp)</label>
+                        <input type="number" name="harga" class="form-control rounded-pill" value="0" min="0" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Deskripsi</label>
@@ -226,7 +233,6 @@ $items = $itemObj->getAllItems();
             const barcodeText = this.getAttribute('data-barcode');
             const itemName = this.getAttribute('data-name');
             
-            // Buat container sementara
             const tempDiv = document.createElement('div');
             const qr = new QRCode(tempDiv, {
                 text: barcodeText,
@@ -236,7 +242,6 @@ $items = $itemObj->getAllItems();
                 colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.H
             });
-            // Tunggu QR selesai
             setTimeout(() => {
                 const img = tempDiv.querySelector('img');
                 if (img) {

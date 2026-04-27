@@ -68,11 +68,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 <div class="table-responsive">
                     <table class="table table-striped table-bordered">
                         <thead class="table-dark">
-                            <tr><th>Siswa</th><th>NIS</th><th>Barang</th><th>Tgl Pinjam</th><th>Batas Waktu</th><th>Status</th><th>Denda</th></tr>
+                            <tr>
+                                <th>Siswa</th><th>NIS</th><th>Barang</th><th>Tgl Pinjam</th><th>Batas Waktu</th><th>Status</th><th>Denda</th><th>Aksi</th>
+                            </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($loans as $row): ?>
-                                <tr class="<?= ($row['status']=='dipinjam' && strtotime($row['batas_waktu'])<time()) ? 'table-danger' : '' ?>">
+                            <?php foreach ($loans as $row): 
+                                $is_late = ($row['status'] == 'dipinjam' && strtotime($row['batas_waktu']) < time());
+                            ?>
+                                <tr class="<?= $is_late ? 'table-danger' : '' ?>">
                                     <td><?= htmlspecialchars($row['siswa']) ?></td>
                                     <td><?= htmlspecialchars($row['nis'] ?? '-') ?></td>
                                     <td><?= htmlspecialchars($row['nama_item']) ?></td>
@@ -80,6 +84,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                                     <td><?= $row['batas_waktu'] ?></td>
                                     <td><?= $row['status'] ?></td>
                                     <td>Rp <?= number_format($row['denda'],0,',','.') ?></td>
+                                    <td>
+                                        <?php if ($row['status'] == 'dipinjam'): ?>
+                                            <a href="submit_return.php?loan_id=<?= $row['id'] ?>" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-undo-alt"></i> Ajukan Pengembalian
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

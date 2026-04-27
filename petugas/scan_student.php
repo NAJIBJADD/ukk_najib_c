@@ -127,28 +127,36 @@ if (isset($_POST['action']) && isset($_POST['request_id'])) {
                             <div class="table-responsive">
                                 <table class="table table-bordered table-striped">
                                     <thead class="table-dark">
-                                        <tr><th>ID</th><th>Barang</th><th>Tanggal Request</th><th>Catatan</th><th>Aksi</th></tr>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Barang</th>
+                                            <th>Tanggal Request</th>
+                                            <th>Tanggal Kembali Diminta</th>
+                                            <th>Catatan</th>
+                                            <th>Aksi</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
                                         <?php foreach ($pendingRequests as $req): ?>
-                                        <tr>
-                                            <td><?= $req['id'] ?></td>
-                                            <td><?= htmlspecialchars($req['nama_item']) ?></td>
-                                            <td><?= $req['tgl_request'] ?></td>
-                                            <td><?= htmlspecialchars($req['catatan']) ?></td>
-                                            <td>
-                                                <form method="POST" style="display:inline-block">
-                                                    <input type="hidden" name="request_id" value="<?= $req['id'] ?>">
-                                                    <input type="hidden" name="action" value="approve">
-                                                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Setujui peminjaman ini?')">✅ Setujui</button>
-                                                </form>
-                                                <form method="POST" style="display:inline-block">
-                                                    <input type="hidden" name="request_id" value="<?= $req['id'] ?>">
-                                                    <input type="hidden" name="action" value="reject">
-                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tolak permintaan ini?')">❌ Tolak</button>
-                                                </form>
-                                            </td>
-                                        </tr>
+                                            <tr>
+                                                <td><?= $req['id'] ?></td>
+                                                <td><?= htmlspecialchars($req['nama_item']) ?></td>
+                                                <td><?= $req['tgl_request'] ?></td>
+                                                <td><?= $req['requested_return_date'] ?? '-' ?></td>
+                                                <td><?= htmlspecialchars($req['catatan']) ?></td>
+                                                <td>
+                                                    <form method="POST" style="display:inline-block">
+                                                        <input type="hidden" name="request_id" value="<?= $req['id'] ?>">
+                                                        <input type="hidden" name="action" value="approve">
+                                                        <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Setujui peminjaman ini?')">✅ Setujui</button>
+                                                    </form>
+                                                    <form method="POST" style="display:inline-block">
+                                                        <input type="hidden" name="request_id" value="<?= $req['id'] ?>">
+                                                        <input type="hidden" name="action" value="reject">
+                                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tolak permintaan ini?')">❌ Tolak</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>

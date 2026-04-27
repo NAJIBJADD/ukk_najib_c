@@ -6,10 +6,13 @@ class Request {
         $this->db = Database::getInstance()->getConnection();
     }
     
-    public function createRequest($siswaId, $itemId, $catatan = '') {
+    /**
+     * Buat permintaan peminjaman dengan tanggal kembali yang diinginkan siswa.
+     */
+    public function createRequest($siswaId, $itemId, $returnDate = null, $catatan = '') {
         $tgl_request = date('Y-m-d H:i:s');
-        $stmt = $this->db->prepare("INSERT INTO requests (id_siswa, id_item, tgl_request, status, catatan) VALUES (?, ?, ?, 'pending', ?)");
-        return $stmt->execute([$siswaId, $itemId, $tgl_request, $catatan]);
+        $stmt = $this->db->prepare("INSERT INTO requests (id_siswa, id_item, tgl_request, status, catatan, requested_return_date) VALUES (?, ?, ?, 'pending', ?, ?)");
+        return $stmt->execute([$siswaId, $itemId, $tgl_request, $catatan, $returnDate]);
     }
     
     public function getAllRequests() {
@@ -31,6 +34,9 @@ class Request {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
+    /**
+     * Update status request, jika disetujui maka buat peminjaman dengan batas waktu sesuai requested_return_date.
+     */
     public function updateRequestStatus($requestId, $status, $petugasId) {
         $stmt = $this->db->prepare("UPDATE requests SET status = ? WHERE id = ?");
         $result = $stmt->execute([$status, $requestId]);
@@ -39,15 +45,20 @@ class Request {
             $req = $this->getRequestById($requestId);
             if ($req) {
                 $loanObj = new Loan();
+                // Gunakan requested_return_date jika ada, jika tidak default +7 hari
+                if (!empty($req['requested_return_date'])) {
+                    $batas_waktu = $req['requested_return_date'] . ' 23:59:59';
+                } else {
+                    $batas_waktu = date('Y-m-d H:i:s', strtotime('+7 days'));
+                }
                 $tgl_pinjam = date('Y-m-d H:i:s');
-                $batas_waktu = date('Y-m-d H:i:s', strtotime('+7 days'));
                 $insertLoan = $this->db->prepare("INSERT INTO loans (id_siswa, id_item, tgl_pinjam, batas_waktu, status) VALUES (?, ?, ?, ?, 'dipinjam')");
                 $loanCreated = $insertLoan->execute([$req['id_siswa'], $req['id_item'], $tgl_pinjam, $batas_waktu]);
                 if ($loanCreated) {
                     $itemObj = new Item();
                     $itemObj->updateStatus($req['id_item'], 'dipinjam');
                     $log = new Log();
-                    $log->add($petugasId, 'Setujui Request', "Request ID $requestId, siswa {$req['id_siswa']}, item {$req['id_item']}");
+                    $log->add($petugasId, 'Setujui Request', "Request ID $requestId, siswa {$req['id_siswa']}, item {$req['id_item']}, batas waktu $batas_waktu");
                 }
                 return $loanCreated;
             }

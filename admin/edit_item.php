@@ -3,17 +3,19 @@ require_once '../includes/autoload.php';
 if ($_SESSION['role'] != 'admin') { header("Location: ../login.php"); exit; }
 
 $itemObj = new Item();
-$id = $_GET['id'];
+$id = (int)$_GET['id'];
 $item = $itemObj->getItemById($id);
-if(!$item) { header("Location: manage_items.php"); exit; }
+if (!$item) { header("Location: manage_items.php"); exit; }
 
-if($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $nama = $_POST['nama_item'];
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $nama = trim($_POST['nama_item']);
     $kategori = $_POST['kategori'] ?? $_POST['kategori_manual'] ?? $item['kategori'];
-    $deskripsi = $_POST['deskripsi'];
+    $deskripsi = trim($_POST['deskripsi']);
     $status = $_POST['status'];
     $stok = (int)$_POST['stok'];
-    if($itemObj->updateItem($id, $nama, $kategori, $deskripsi, $status, $stok)) {
+    $harga = (int)$_POST['harga'];
+    
+    if ($itemObj->updateItem($id, $nama, $kategori, $deskripsi, $status, $stok, $harga)) {
         $_SESSION['success'] = "Barang diperbarui";
     } else {
         $_SESSION['error'] = "Gagal update";
@@ -52,6 +54,11 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <div class="mb-3">
                             <label>Stok</label>
                             <input type="number" name="stok" class="form-control rounded-pill" value="<?= $item['stok'] ?>" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Harga (Rp) <span class="text-danger">*</span></label>
+                            <input type="number" name="harga" class="form-control rounded-pill" value="<?= $item['harga'] ?>" min="0" required>
+                            <small class="text-muted">Digunakan untuk perhitungan denda rusak (50%) dan hilang (100%).</small>
                         </div>
                         <div class="mb-3">
                             <label>Deskripsi</label>

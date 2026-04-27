@@ -36,23 +36,25 @@ $requests = $paymentManager->getPendingRequests();
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead class="table-dark">
-                            <tr><th>ID</th><th>Siswa</th><th>Barang</th><th>Denda</th><th>Petugas</th><th>Tgl Request</th><th>Catatan</th><th>Aksi</th></tr>
+                            <tr>
+                                <th>ID</th><th>Siswa</th><th>Barang</th><th>Denda</th><th>Petugas</th><th>Tgl Request</th><th>Catatan</th><th>Aksi</th>
+                            </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($requests as $req): ?>
-                                <tr>
-                                    <td><?= $req['id'] ?></td>
-                                    <td><?= htmlspecialchars($req['siswa']) ?></td>
-                                    <td><?= htmlspecialchars($req['nama_item']) ?></td>
-                                    <td>Rp <?= number_format($req['jumlah_denda'],0,',','.') ?></td>
-                                    <td><?= htmlspecialchars($req['petugas']) ?></td>
-                                    <td><?= $req['tgl_request'] ?></td>
-                                    <td><?= htmlspecialchars($req['catatan'] ?: '-') ?></td>
-                                    <td>
-                                        <a href="?approve=<?= $req['id'] ?>" class="btn btn-sm btn-success" onclick="return confirm('Setujui pembayaran denda?')">Setujui</a>
-                                        <a href="?reject=<?= $req['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Tolak permintaan?')">Tolak</a>
-                                    </td>
-                                </tr>
+                            <tr>
+                                <td><?= $req['id'] ?></td>
+                                <td><?= htmlspecialchars($req['siswa']) ?></td>
+                                <td><?= htmlspecialchars($req['nama_item']) ?></span>
+                                <td>Rp <?= number_format($req['jumlah_denda'],0,',','.') ?></td>
+                                <td><?= htmlspecialchars($req['petugas']) ?></span>
+                                <td><?= $req['tgl_request'] ?></td>
+                                <td><?= htmlspecialchars($req['catatan'] ?: '-') ?></span>
+                                <td>
+                                    <a href="?approve=<?= $req['id'] ?>" class="btn btn-sm btn-success" onclick="return confirm('Setujui pembayaran denda?')">Setujui</a>
+                                    <a href="?reject=<?= $req['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Tolak permintaan?')">Tolak</a>
+                                </td>
+                            </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>

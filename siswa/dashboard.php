@@ -55,8 +55,11 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
 
     <!-- Riwayat Peminjaman Aktif & Selesai -->
     <div class="card shadow mb-4">
-        <div class="card-header bg-success text-white">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
             <h4><i class="fas fa-hand-holding"></i> Riwayat Peminjaman</h4>
+            <a href="request_item.php" class="btn btn-light btn-sm rounded-pill">
+                <i class="fas fa-hand-holding"></i> Ajukan Peminjaman Baru
+            </a>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -88,7 +91,7 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
                         </tr>
                         <?php endforeach; ?>
                         <?php if (empty($loans)): ?>
-                            <tr><td colspan="6" class="text-center">Belum ada riwayat peminjaman</td></tr>
+                            <tr><td colspan="6" class="text-center">Belum ada riwayat peminjaman</span></td>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -131,7 +134,7 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
                         </tr>
                         <?php endforeach; ?>
                         <?php if (empty($requests)): ?>
-                            <tr><td colspan="5" class="text-center">Belum ada permintaan</td></tr>
+                            <tr><td colspan="5" class="text-center">Belum ada permintaan</span></td>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -163,7 +166,6 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
     </div>
 </div>
 
-<!-- Library QR Code Generator -->
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
     let studentId = "<?= $_SESSION['user_id'] ?>";

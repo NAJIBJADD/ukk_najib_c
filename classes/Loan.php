@@ -3,28 +3,35 @@ class Loan {
     private $db;
     
     const DENDA_PER_HARI = 2000;
-    const DENDA_RUSAK = 50000;
-    const DENDA_HILANG = 200000;
     
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
     }
     
+    /**
+     * Ambil harga barang berdasarkan id_item
+     * @param int $itemId
+     * @return int
+     */
+    private function getItemPrice($itemId) {
+        $stmt = $this->db->prepare("SELECT harga FROM items WHERE id = ?");
+        $stmt->execute([$itemId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? (int)$result['harga'] : 0;
+    }
+    
     public function createLoan($siswaId, $itemId) {
-        // Cek stok terlebih dahulu
         $itemObj = new Item();
         $item = $itemObj->getItemById($itemId);
         if (!$item || $item['stok'] <= 0) {
-            return false; // stok habis
+            return false;
         }
         
         $tgl_pinjam = date('Y-m-d H:i:s');
         $batas_waktu = date('Y-m-d H:i:s', strtotime('+7 days'));
         $stmt = $this->db->prepare("INSERT INTO loans (id_siswa, id_item, tgl_pinjam, batas_waktu, status) VALUES (?, ?, ?, ?, 'dipinjam')");
         if ($stmt->execute([$siswaId, $itemId, $tgl_pinjam, $batas_waktu])) {
-            // Kurangi stok
             $itemObj->kurangiStok($itemId, 1);
-            // Update status item jika stok habis
             $itemObj->updateStatus($itemId, 'dipinjam');
             return true;
         }
@@ -72,6 +79,15 @@ class Loan {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
+    /**
+     * Proses pengembalian barang
+     * Denda rusak = 50% harga barang
+     * Denda hilang = 100% harga barang (ganti rugi full)
+     * @param int $loanId
+     * @param string $statusReturn (kembali/rusak/hilang)
+     * @param int $dendaTambahan
+     * @return bool
+     */
     public function returnLoan($loanId, $statusReturn, $dendaTambahan = 0) {
         $loan = $this->getLoanById($loanId);
         if (!$loan) return false;
@@ -83,11 +99,15 @@ class Loan {
         }
         $dendaTelat = $telat_hari * self::DENDA_PER_HARI;
         
-        $dendaRusakHilang = 0;
-        if ($statusReturn == 'rusak') $dendaRusakHilang = self::DENDA_RUSAK;
-        elseif ($statusReturn == 'hilang') $dendaRusakHilang = self::DENDA_HILANG;
+        $hargaBarang = $this->getItemPrice($loan['id_item']);
+        $dendaKondisi = 0;
+        if ($statusReturn == 'rusak') {
+            $dendaKondisi = (int)($hargaBarang * 0.5);
+        } elseif ($statusReturn == 'hilang') {
+            $dendaKondisi = $hargaBarang;
+        }
         
-        $totalDenda = $dendaTelat + $dendaRusakHilang + $dendaTambahan;
+        $totalDenda = $dendaTelat + $dendaKondisi + $dendaTambahan;
         
         $stmt = $this->db->prepare("UPDATE loans SET tgl_kembali = ?, denda = ?, status = ? WHERE id = ?");
         $result = $stmt->execute([$tgl_kembali, $totalDenda, $statusReturn, $loanId]);
@@ -143,12 +163,10 @@ class Loan {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    // Hapus peminjaman (untuk admin setelah request petugas)
     public function deleteLoan($loanId) {
         $loan = $this->getLoanById($loanId);
         if (!$loan) return false;
         
-        // Jika status masih dipinjam, stok harus dikembalikan
         if ($loan['status'] == 'dipinjam') {
             $itemObj = new Item();
             $itemObj->tambahStok($loan['id_item'], 1);
