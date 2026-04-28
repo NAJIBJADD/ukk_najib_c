@@ -83,10 +83,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['item_id'])) {
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
+                    <table class="table table-bordered table-hover align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th>Pilih</th>
+                                <th>Gambar</th>
                                 <th>Nama Barang</th>
                                 <th>Kategori</th>
                                 <th>Stok</th>
@@ -95,11 +96,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['item_id'])) {
                         </thead>
                         <tbody>
                             <?php if (empty($availableItems)): ?>
-                                <tr><td colspan="5" class="text-center">Tidak ada barang yang tersedia saat ini.</td></tr>
+                                <tr><td colspan="6" class="text-center">Tidak ada barang yang tersedia saat ini.</td></td>
                             <?php else: ?>
                                 <?php foreach ($availableItems as $item): ?>
                                     <tr>
                                         <td><input type="radio" name="item_id" value="<?= $item['id'] ?>" required> </span>
+                                        <td>
+                                            <?php if (!empty($item['gambar']) && file_exists("../" . $item['gambar'])): ?>
+                                                <img src="../<?= $item['gambar'] ?>" width="50" height="50" style="object-fit: cover; border-radius: 8px;">
+                                            <?php else: ?>
+                                                <i class="fas fa-image fa-2x text-muted"></i>
+                                            <?php endif; ?>
+                                         </span>
                                         <td><?= htmlspecialchars($item['nama_item']) ?> </span>
                                         <td><?= htmlspecialchars($item['kategori'] ?? '-') ?> </span>
                                         <td><?= $item['stok'] ?> </span>
@@ -125,25 +133,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['item_id'])) {
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped">
                         <thead class="table-dark">
-                            <tr><th>Barang</th><th>Tgl Request</th><th>Tanggal Kembali Diminta</th><th>Status</th><th>Catatan</th></tr>
+                            <tr>
+                                <th>Barang</th>
+                                <th>Gambar</th>
+                                <th>Tgl Request</th>
+                                <th>Tanggal Kembali Diminta</th>
+                                <th>Status</th>
+                                <th>Catatan</th>
+                            </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($requests as $req): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($req['nama_item']) ?> </span>
-                                <td><?= $req['tgl_request'] ?> </span>
-                                <td><?= $req['requested_return_date'] ?? '-' ?> </span>
-                                <td>
-                                    <?php if ($req['status'] == 'pending'): ?>
-                                        <span class="badge bg-warning">Menunggu</span>
-                                    <?php elseif ($req['status'] == 'disetujui'): ?>
-                                        <span class="badge bg-success">Disetujui</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-danger">Ditolak</span>
-                                    <?php endif; ?>
-                                 </span>
-                                <td><?= htmlspecialchars($req['catatan']) ?> </span>
-                            </tr>
+                            <?php foreach ($requests as $req): 
+                                $item = $itemObj->getItemById($req['id_item']);
+                            ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($req['nama_item']) ?> </span>
+                                    <td>
+                                        <?php if (!empty($item['gambar']) && file_exists("../" . $item['gambar'])): ?>
+                                            <img src="../<?= $item['gambar'] ?>" width="40" height="40" style="object-fit: cover; border-radius: 8px;">
+                                        <?php else: ?>
+                                            <i class="fas fa-image text-muted"></i>
+                                        <?php endif; ?>
+                                     </span>
+                                    <td><?= $req['tgl_request'] ?> </span>
+                                    <td><?= $req['requested_return_date'] ?? '-' ?> </span>
+                                    <td>
+                                        <?php if ($req['status'] == 'pending'): ?>
+                                            <span class="badge bg-warning">Menunggu</span>
+                                        <?php elseif ($req['status'] == 'disetujui'): ?>
+                                            <span class="badge bg-success">Disetujui</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-danger">Ditolak</span>
+                                        <?php endif; ?>
+                                     </span>
+                                    <td><?= htmlspecialchars($req['catatan']) ?> </span>
+                                </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>

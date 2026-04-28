@@ -34,27 +34,43 @@ $requests = $paymentManager->getPendingRequests();
                 <div class="alert alert-info">Tidak ada permintaan pembayaran pending.</div>
             <?php else: ?>
                 <div class="table-responsive">
-                    <table class="table table-bordered">
+                    <table class="table table-bordered table-striped">
                         <thead class="table-dark">
                             <tr>
-                                <th>ID</th><th>Siswa</th><th>Barang</th><th>Denda</th><th>Petugas</th><th>Tgl Request</th><th>Catatan</th><th>Aksi</th>
+                                <th>ID</th><th>Siswa</th><th>Barang</th><th>Gambar Barang</th>
+                                <th>Denda</th><th>Petugas</th><th>Tgl Request</th><th>Catatan</th>
+                                <th>Bukti Bayar</th><th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($requests as $req): ?>
-                            <tr>
-                                <td><?= $req['id'] ?></td>
-                                <td><?= htmlspecialchars($req['siswa']) ?></td>
-                                <td><?= htmlspecialchars($req['nama_item']) ?></span>
-                                <td>Rp <?= number_format($req['jumlah_denda'],0,',','.') ?></td>
-                                <td><?= htmlspecialchars($req['petugas']) ?></span>
-                                <td><?= $req['tgl_request'] ?></td>
-                                <td><?= htmlspecialchars($req['catatan'] ?: '-') ?></span>
-                                <td>
-                                    <a href="?approve=<?= $req['id'] ?>" class="btn btn-sm btn-success" onclick="return confirm('Setujui pembayaran denda?')">Setujui</a>
-                                    <a href="?reject=<?= $req['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Tolak permintaan?')">Tolak</a>
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td><?= $req['id'] ?></td>
+                                    <td><?= htmlspecialchars($req['siswa']) ?> (<?= $req['id_siswa'] ?>)</span>
+                                    <td><?= htmlspecialchars($req['nama_item']) ?> </span>
+                                    <td>
+                                        <?php if (!empty($req['gambar_barang']) && file_exists("../".$req['gambar_barang'])): ?>
+                                            <img src="../<?= $req['gambar_barang'] ?>" width="40" height="40" class="rounded">
+                                        <?php else: ?>
+                                            <i class="fas fa-image text-muted"></i>
+                                        <?php endif; ?>
+                                     </span>
+                                    <td>Rp <?= number_format($req['jumlah_denda'],0,',','.') ?> </span>
+                                    <td><?= htmlspecialchars($req['petugas']) ?> </span>
+                                    <td><?= $req['tgl_request'] ?> </span>
+                                    <td><?= htmlspecialchars($req['catatan'] ?: '-') ?> </span>
+                                    <td>
+                                        <?php if (!empty($req['gambar']) && file_exists("../".$req['gambar'])): ?>
+                                            <a href="../<?= $req['gambar'] ?>" target="_blank" class="btn btn-sm btn-info">Lihat Bukti</a>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
+                                     </span>
+                                    <td>
+                                        <a href="?approve=<?= $req['id'] ?>" class="btn btn-sm btn-success" onclick="return confirm('Setujui?')">Setujui</a>
+                                        <a href="?reject=<?= $req['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Tolak?')">Tolak</a>
+                                     </span>
+                                </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>

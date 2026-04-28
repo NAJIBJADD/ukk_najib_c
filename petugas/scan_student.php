@@ -9,16 +9,41 @@ $requestObj = new Request();
 $studentData = null;
 $pendingRequests = [];
 $error = '';
+$searchResult = [];
 
-// Proses scan dari kamera atau manual atau upload
+// Proses pencarian nama siswa (GET)
+if (isset($_GET['search_name']) && !empty(trim($_GET['search_name']))) {
+    $keyword = '%' . trim($_GET['search_name']) . '%';
+    $pdo = Database::getInstance()->getConnection();
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE role = 'siswa' AND (nama_lengkap LIKE ? OR username LIKE ?) ORDER BY nama_lengkap ASC");
+    $stmt->execute([$keyword, $keyword]);
+    $searchResult = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// Proses pilih siswa dari hasil pencarian
+if (isset($_GET['select_student'])) {
+    $studentId = (int)$_GET['select_student'];
+    $userObj = new User();
+    $student = $userObj->getUserById($studentId);
+    if ($student && $student['role'] == 'siswa') {
+        $studentData = $student;
+        $allRequests = $requestObj->getRequestsByStudent($studentData['id']);
+        foreach ($allRequests as $req) {
+            if ($req['status'] == 'pending') {
+                $pendingRequests[] = $req;
+            }
+        }
+    } else {
+        $error = "Siswa tidak ditemukan.";
+    }
+}
+
+// Proses scan dari kamera atau manual atau upload (POST)
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['barcode'])) {
     $scannedId = trim($_POST['barcode']);
-    
-    // Ekstrak angka jika ada teks lain (misal "3 - Nama")
     if (preg_match('/^(\d+)/', $scannedId, $matches)) {
         $scannedId = $matches[1];
     }
-    
     $userObj = new User();
     $allUsers = $userObj->getAllUsers();
     foreach ($allUsers as $user) {
@@ -64,8 +89,39 @@ if (isset($_POST['action']) && isset($_POST['request_id'])) {
             </a>
         </div>
         <div class="card-body">
+            <!-- Pencarian Nama Siswa -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <strong>Cari Siswa berdasarkan Nama</strong>
+                </div>
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-8">
+                            <input type="text" name="search_name" class="form-control" placeholder="Masukkan nama depan" value="<?= htmlspecialchars($_GET['search_name'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary">Cari</button>
+                        </div>
+                    </form>
+                    <?php if (!empty($searchResult)): ?>
+                        <hr>
+                        <h6>Hasil pencarian:</h6>
+                        <ul class="list-group">
+                            <?php foreach ($searchResult as $siswa): ?>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <?= htmlspecialchars($siswa['nama_lengkap']) ?> (<?= htmlspecialchars($siswa['username']) ?>)
+                                    <a href="?select_student=<?= $siswa['id'] ?>" class="btn btn-sm btn-success">Pilih</a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php elseif (isset($_GET['search_name']) && empty($searchResult)): ?>
+                        <div class="alert alert-warning mt-2">Tidak ditemukan siswa dengan nama tersebut.</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Petugas: Scan QR Code siswa (berisi ID angka) untuk melihat permintaan pending.
+                <i class="fas fa-info-circle"></i> Petugas: Scan QR Code siswa (berisi ID angka) atau cari berdasarkan nama untuk melihat permintaan pending.
             </div>
             <ul class="nav nav-tabs mb-3">
                 <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cameraTab">📷 Scan Kamera</button></li>

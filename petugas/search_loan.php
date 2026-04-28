@@ -12,7 +12,11 @@ $search_type = '';
 $search_value = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-    if (isset($_GET['search_date']) && !empty($_GET['search_date'])) {
+    // Jika parameter 'all' ada, tampilkan semua peminjaman
+    if (isset($_GET['all']) && $_GET['all'] == 1) {
+        $search_type = 'all';
+        $loans = $loanObj->getAllLoans();
+    } elseif (isset($_GET['search_date']) && !empty($_GET['search_date'])) {
         $search_type = 'date';
         $search_value = $_GET['search_date'];
         $loans = $loanObj->getLoansByDate($search_value);
@@ -34,6 +38,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             </a>
         </div>
         <div class="card-body">
+            <!-- Tombol Lihat Semua Peminjaman -->
+            <div class="mb-3">
+                <a href="?all=1" class="btn btn-info <?= $search_type == 'all' ? 'active' : '' ?>">
+                    <i class="fas fa-list me-1"></i> Lihat Semua Peminjaman
+                </a>
+            </div>
+
             <ul class="nav nav-tabs mb-3">
                 <li class="nav-item"><button class="nav-link <?= $search_type == 'date' ? 'active' : '' ?>" data-bs-toggle="tab" data-bs-target="#dateTab">📅 Berdasarkan Tanggal</button></li>
                 <li class="nav-item"><button class="nav-link <?= $search_type == 'student' ? 'active' : '' ?>" data-bs-toggle="tab" data-bs-target="#studentTab">👨‍🎓 Berdasarkan ID/NIS Siswa</button></li>
@@ -63,8 +74,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 </div>
             </div>
             <hr>
-            <?php if ($search_value && !empty($loans)): ?>
-                <h5>Hasil Pencarian: <?= $search_type == 'date' ? "Tanggal $search_value" : "ID/NIS $search_value" ?></h5>
+            <?php if (($search_type == 'all' && !empty($loans)) || ($search_value && !empty($loans))): ?>
+                <h5>Hasil Pencarian: 
+                    <?php if ($search_type == 'all'): ?>
+                        Semua Peminjaman
+                    <?php elseif ($search_type == 'date'): ?>
+                        Tanggal <?= $search_value ?>
+                    <?php else: ?>
+                        ID/NIS <?= htmlspecialchars($search_value) ?>
+                    <?php endif; ?>
+                </h5>
                 <div class="table-responsive">
                     <table class="table table-striped table-bordered">
                         <thead class="table-dark">

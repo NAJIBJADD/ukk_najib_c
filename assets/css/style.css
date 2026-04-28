@@ -1,25 +1,301 @@
+/* ============================================
+   TEMA JEPANG: SAKURA & BUKU
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    background-color: #f4f7fc;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(145deg, #fff5f7 0%, #fef3f0 100%);
+    font-family: 'Noto Sans JP', 'Inter', sans-serif;
+    color: #4a2e2b;
+    position: relative;
+    min-height: 100vh;
 }
+
+/* Hiasan bunga sakura di background (statis) */
+body::before {
+    content: "🌸";
+    position: fixed;
+    bottom: 15px;
+    left: 15px;
+    font-size: 3rem;
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: 0;
+    transform: rotate(-15deg);
+}
+
+body::after {
+    content: "📖";
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    font-size: 2.5rem;
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Efek sakura berjatuhan (animasi) */
+@keyframes fall {
+    0% { transform: translateY(-10vh) rotate(0deg); opacity: 0.6; }
+    100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+}
+.sakura {
+    position: fixed;
+    font-size: 1rem;
+    pointer-events: none;
+    z-index: 0;
+    animation: fall linear infinite;
+    opacity: 0;
+}
+/* 5 bunga sakura dengan delay berbeda */
+.sakura:nth-child(1) { left: 10%; animation-duration: 8s; animation-delay: 0s; }
+.sakura:nth-child(2) { left: 30%; animation-duration: 11s; animation-delay: 2s; }
+.sakura:nth-child(3) { left: 50%; animation-duration: 9s; animation-delay: 4s; }
+.sakura:nth-child(4) { left: 70%; animation-duration: 12s; animation-delay: 1s; }
+.sakura:nth-child(5) { left: 85%; animation-duration: 10s; animation-delay: 3s; }
+
+/* Card gaya Jepang */
 .card {
-    border-radius: 15px;
+    background: rgba(255, 245, 245, 0.96);
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-bottom: 1.5rem;
     overflow: hidden;
-    margin-bottom: 20px;
+    border-bottom: 3px solid #e8a2a2;
 }
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 28px rgba(0, 0, 0, 0.08);
+}
+.card-header {
+    background: white;
+    border-bottom: 1px solid #f0d9d9;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    color: #b55b5b;
+}
+.card-header.bg-primary,
+.card-header.bg-success,
+.card-header.bg-info,
+.card-header.bg-warning,
+.card-header.bg-danger {
+    background: #fae6e6 !important;
+    color: #b55b5b;
+    border-bottom: none;
+}
+
+/* Tombol gaya Jepang */
 .btn {
-    border-radius: 25px;
+    border-radius: 40px;
+    padding: 0.5rem 1.3rem;
+    font-weight: 500;
+    transition: all 0.2s;
 }
-.table thead {
-    background-color: #2c3e50;
+.btn-primary {
+    background: #c44536;
+    border: none;
+    color: white;
+    box-shadow: 0 2px 5px rgba(196, 69, 54, 0.3);
+}
+.btn-primary:hover {
+    background: #ab2f1f;
+    transform: translateY(-2px);
+}
+.btn-success {
+    background: #2d6a4f;
+    border: none;
+}
+.btn-success:hover {
+    background: #1f4f3a;
+}
+.btn-danger {
+    background: #bc4a3c;
+    border: none;
+}
+.btn-warning {
+    background: #e0a158;
+    border: none;
     color: white;
 }
-.blink-red {
-    animation: blink 0.8s infinite;
-    font-weight: bold;
+.btn-secondary {
+    background: #8d7a72;
+    border: none;
 }
-@keyframes blink {
-    0% { background-color: #f8d7da; color: black; }
-    50% { background-color: #dc3545; color: white; }
-    100% { background-color: #f8d7da; color: black; }
+.btn-light {
+    background: white;
+    border: 1px solid #f0cfcf;
+    color: #b76262;
+}
+.btn-back {
+    background: #f8e8e8;
+    border: 1px solid #ecc2c2;
+    color: #b55b5b;
+}
+.btn-back:hover {
+    background: #f0dada;
+}
+
+/* Tabel */
+.table {
+    border-radius: 20px;
+    overflow: hidden;
+}
+.table thead th {
+    background: #fce8e8;
+    color: #8e4c4c;
+    font-weight: 600;
+    border-bottom: 1px solid #f0d9d9;
+    padding: 0.8rem 1rem;
+}
+.table tbody tr {
+    background: white;
+    transition: 0.1s;
+}
+.table tbody tr:hover {
+    background: #fef7f7;
+}
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #fef9f9;
+}
+
+/* Badge dengan nuansa pastel */
+.badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 40px;
+    font-weight: 500;
+}
+.badge.bg-success {
+    background: #e3f4e8;
+    color: #2d6a4f;
+}
+.badge.bg-warning {
+    background: #ffefdb;
+    color: #b85c00;
+}
+.badge.bg-danger {
+    background: #fee7e7;
+    color: #b91c1c;
+}
+.badge.bg-primary {
+    background: #fad7d7;
+    color: #c15646;
+}
+.badge.bg-secondary {
+    background: #f0e6e3;
+    color: #8d7a72;
+}
+
+/* Form control */
+.form-control, .form-select {
+    border-radius: 30px;
+    border: 1px solid #f0cfcf;
+    padding: 0.6rem 1.2rem;
+    background: white;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #e8a2a2;
+    box-shadow: 0 0 0 3px rgba(232, 162, 162, 0.2);
+    outline: none;
+}
+
+/* Navbar dengan nuansa apel Jepang */
+.navbar {
+    background: rgba(255, 250, 250, 0.96);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid #f2dede;
+    padding: 0.6rem 0;
+}
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.3rem;
+    background: transparent;
+    color: #b55b5b !important;
+}
+.navbar-brand i {
+    color: #e8a2a2;
+}
+.nav-link {
+    font-weight: 500;
+    border-radius: 30px;
+    color: #5e3e3e;
+}
+.nav-link:hover {
+    background: #fce8e8;
+    color: #b55b5b;
+}
+
+/* Alert alarm gaya Jepang */
+@keyframes gentleBlink {
+    0% { background-color: #fff5f0; border-left-color: #e8a2a2; }
+    50% { background-color: #ffe6e6; border-left-color: #c44536; transform: scale(1.01);}
+    100% { background-color: #fff5f0; border-left-color: #e8a2a2; }
+}
+.blink-red {
+    animation: gentleBlink 1s ease-in-out infinite;
+    border-left-width: 5px;
+    border-left-style: solid;
+    border-radius: 20px;
+    font-weight: 600;
+    background: #fff5f0;
+    color: #a15040;
+}
+.alert {
+    border-radius: 20px;
+    border: none;
+}
+
+/* Stat card */
+.stat-card {
+    background: white;
+    border-radius: 28px;
+    padding: 1.2rem;
+    border: 1px solid #f0dada;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+.stat-card .icon {
+    font-size: 2rem;
+    color: #e8a2a2;
+    opacity: 0.6;
+    position: absolute;
+    bottom: 0.8rem;
+    right: 1rem;
+}
+.stat-card p {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #b68a7a;
+    margin-bottom: 0.3rem;
+}
+.stat-card h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #b35b4b;
+}
+
+/* QR container */
+.qr-container {
+    background: white;
+    padding: 1rem;
+    border-radius: 20px;
+    border: 1px solid #f0d9d9;
+    display: inline-block;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container { padding-left: 1rem; padding-right: 1rem; }
+    .stat-card h2 { font-size: 1.5rem; }
 }

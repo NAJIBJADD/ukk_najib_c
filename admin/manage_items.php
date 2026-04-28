@@ -1,11 +1,26 @@
 <?php
 require_once '../includes/autoload.php';
-if ($_SESSION['role'] != 'admin') {
+if ($_SESSION['role'] !== 'admin') {
     header("Location: ../login.php");
     exit;
 }
 
-$itemObj = new Item();
+$itemManager = new Item();
+
+function uploadGambar($file) {
+    $targetDir = "../assets/uploads/items/";
+    if (!file_exists($targetDir)) mkdir($targetDir, 0777, true);
+    $fileName = time() . '_' . basename($file['name']);
+    $targetFile = $targetDir . $fileName;
+    $imageFileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+    $allowedTypes = ['jpg', 'jpeg', 'png', 'webp'];
+    if (!in_array($imageFileType, $allowedTypes)) return false;
+    if ($file['size'] > 2 * 1024 * 1024) return false;
+    if (move_uploaded_file($file['tmp_name'], $targetFile)) {
+        return 'assets/uploads/items/' . $fileName;
+    }
+    return false;
+}
 
 // Tambah barang
 if (isset($_POST['add'])) {
@@ -13,13 +28,13 @@ if (isset($_POST['add'])) {
     $kategori  = $_POST['kategori'] ?? $_POST['kategori_manual'] ?? 'Umum';
     $deskripsi = $_POST['deskripsi'];
     $stok      = (int) ($_POST['stok'] ?? 1);
-    $harga     = (int) ($_POST['harga'] ?? 0);
-
-    if ($itemObj->addItem($nama, $kategori, $deskripsi, $stok, $harga)) {
-        $_SESSION['success'] = "Barang berhasil ditambahkan";
-    } else {
-        $_SESSION['error'] = "Gagal menambahkan barang";
+    $gambar    = '';
+    if (isset($_FILES['gambar']) && $_FILES['gambar']['error'] == 0) {
+        $gambar = uploadGambar($_FILES['gambar']);
+        if (!$gambar) $_SESSION['error'] = "Gambar gagal diupload (format jpg/png/webp, max 2MB)";
     }
+    $success = $itemManager->addItem($nama, $kategori, $deskripsi, $stok, $gambar);
+    $_SESSION[$success ? 'success' : 'error'] = $success ? "Barang berhasil ditambahkan" : "Gagal menambahkan barang";
     header("Location: manage_items.php");
     exit;
 }
@@ -27,97 +42,61 @@ if (isset($_POST['add'])) {
 // Hapus barang
 if (isset($_GET['delete'])) {
     $id = (int) $_GET['delete'];
-    if ($itemObj->deleteItem($id)) {
-        $_SESSION['success'] = "Barang dihapus";
-    } else {
-        $_SESSION['error'] = "Gagal hapus barang";
+    $item = $itemManager->getItemById($id);
+    if ($item && $item['gambar'] && file_exists("../" . $item['gambar'])) {
+        unlink("../" . $item['gambar']);
     }
+    $success = $itemManager->deleteItem($id);
+    $_SESSION[$success ? 'success' : 'error'] = $success ? "Barang dihapus" : "Gagal hapus barang";
     header("Location: manage_items.php");
     exit;
 }
 
-$items = $itemObj->getAllItems();
+$items = $itemManager->getAllItems();
+include '../includes/header.php';
+include '../includes/navbar.php';
 ?>
-
-<?php include '../includes/header.php'; ?>
-<?php include '../includes/navbar.php'; ?>
-
 <div class="container mt-4">
     <div class="card shadow-sm border-0 rounded-4">
-        <div class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center pt-4 pb-2 px-4">
-            <h5 class="mb-0 fw-semibold text-primary">
-                <i class="fas fa-box me-2"></i>Manajemen Barang (QR Code)
-            </h5>
-            <div>
-                <a href="dashboard.php" class="btn btn-outline-secondary btn-sm me-2 rounded-pill">
-                    <i class="fas fa-arrow-left me-1"></i>Kembali
-                </a>
-                <button class="btn btn-primary btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#addModal">
-                    <i class="fas fa-plus me-1"></i>Tambah Barang
-                </button>
+        <div class="card-header bg-white border-bottom-0 d-flex flex-wrap justify-content-between align-items-center pt-3 pt-md-4 pb-2 px-3 px-md-4">
+            <h5 class="mb-2 mb-md-0 fw-semibold text-primary"><i class="fas fa-box me-2"></i>Manajemen Barang</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="dashboard.php" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="fas fa-arrow-left me-1"></i>Kembali</a>
+                <button class="btn btn-primary btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#addModal"><i class="fas fa-plus me-1"></i>Tambah Barang</button>
             </div>
         </div>
-
-        <div class="card-body p-4">
+        <div class="card-body p-3 p-md-4">
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th class="border-0">ID</th>
-                            <th class="border-0">QR Code</th>
-                            <th class="border-0">Nama Barang</th>
-                            <th class="border-0">Kategori</th>
-                            <th class="border-0">Stok</th>
-                            <th class="border-0">Harga (Rp)</th>
-                            <th class="border-0">Status</th>
-                            <th class="border-0">Aksi</th>
+                            <th>No</th><th>Gambar</th><th>Nama</th><th>Kategori</th><th>Stok</th><th>Status</th><th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
+                        <?php $no = 1; ?>
                         <?php foreach ($items as $item): ?>
-                            <tr data-item-id="<?= $item['id'] ?>">
-                                <td><?= $item['id'] ?></td>
+                            <tr>
+                                <td><?= $no++ ?></td>
                                 <td>
-                                    <div id="qrcode-<?= $item['id'] ?>" style="width: 100px; height: 100px;"></div>
-                                    <div class="small text-muted mt-1"><?= $item['barcode'] ?></div>
+                                    <?php if ($item['gambar'] && file_exists("../" . $item['gambar'])): ?>
+                                        <img src="../<?= $item['gambar'] ?>" width="45" height="45" class="rounded" style="object-fit: cover;">
+                                    <?php else: ?>
+                                        <i class="fas fa-image fa-1x text-muted"></i>
+                                    <?php endif; ?>
                                 </td>
                                 <td><?= htmlspecialchars($item['nama_item']) ?></td>
                                 <td><?= htmlspecialchars($item['kategori'] ?? '-') ?></td>
                                 <td><?= $item['stok'] ?></td>
-                                <td>Rp <?= number_format($item['harga'], 0, ',', '.') ?></td>
+                                <td><span class="badge <?= $item['status']=='tersedia'?'badge-soft-success':($item['status']=='dipinjam'?'badge-soft-warning':'badge-soft-danger') ?> rounded-pill px-3 py-1"><?= ucfirst($item['status']) ?></span></td>
                                 <td>
-                                    <?php
-                                    $status = $item['status'];
-                                    $badgeClass = '';
-                                    if ($status == 'tersedia') $badgeClass = 'badge-soft-success';
-                                    elseif ($status == 'dipinjam') $badgeClass = 'badge-soft-warning';
-                                    else $badgeClass = 'badge-soft-danger';
-                                    ?>
-                                    <span class="badge <?= $badgeClass ?> rounded-pill px-3 py-1">
-                                        <?= ucfirst($status) ?>
-                                    </span>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <a href="edit_item.php?id=<?= $item['id'] ?>" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-edit"></i> Edit</a>
+                                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#viewItemModal" data-id="<?= $item['id'] ?>" data-name="<?= htmlspecialchars($item['nama_item']) ?>" data-kategori="<?= htmlspecialchars($item['kategori'] ?? '-') ?>" data-stok="<?= $item['stok'] ?>" data-status="<?= $item['status'] ?>" data-deskripsi="<?= htmlspecialchars($item['deskripsi']) ?>" data-gambar="<?= $item['gambar'] ?>"><i class="fas fa-eye"></i> Lihat</button>
+                                        <a href="?delete=<?= $item['id'] ?>" class="btn btn-sm btn-outline-danger rounded-pill" onclick="return confirm('Yakin hapus?')"><i class="fas fa-trash"></i> Hapus</a>
+                                    </div>
                                 </td>
-                                <td>
-                                    <a href="edit_item.php?id=<?= $item['id'] ?>" class="btn btn-sm btn-outline-primary rounded-pill me-1">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-outline-info rounded-pill me-1 view-qrcode" 
-                                            data-id="<?= $item['id'] ?>" 
-                                            data-barcode="<?= $item['barcode'] ?>" 
-                                            data-name="<?= htmlspecialchars($item['nama_item']) ?>">
-                                        <i class="fas fa-eye"></i> Lihat QR
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill me-1 download-qrcode" 
-                                            data-id="<?= $item['id'] ?>" 
-                                            data-barcode="<?= $item['barcode'] ?>" 
-                                            data-name="<?= htmlspecialchars($item['nama_item']) ?>">
-                                        <i class="fas fa-download"></i> Download
-                                    </button>
-                                    <a href="?delete=<?= $item['id'] ?>" class="btn btn-sm btn-outline-danger rounded-pill" onclick="return confirm('Yakin hapus?')">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </a>
-                                </td>
-                            </table>
+                            </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
@@ -126,48 +105,25 @@ $items = $itemObj->getAllItems();
     </div>
 </div>
 
-<!-- Modal Tambah Barang -->
+<!-- Modal Tambah Barang (responsif) -->
 <div class="modal fade" id="addModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-0 bg-white pt-4 px-4">
-                <h5 class="modal-title fw-semibold">
-                    <i class="fas fa-plus-circle text-primary me-2"></i>Tambah Barang Baru
-                </h5>
+                <h5 class="modal-title fw-semibold"><i class="fas fa-plus-circle text-primary me-2"></i>Tambah Barang Baru</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 <div class="modal-body px-4 pb-2">
+                    <div class="mb-3"><label class="form-label fw-semibold">Nama Barang *</label><input type="text" name="nama_item" class="form-control rounded-pill" required></div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Nama Barang <span class="text-danger">*</span></label>
-                        <input type="text" name="nama_item" class="form-control rounded-pill" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Kategori <span class="text-danger">*</span></label>
-                        <select name="kategori" class="form-select rounded-pill">
-                            <option value="Buku">Buku</option>
-                            <option value="Alat Tulis">Alat Tulis</option>
-                            <option value="Elektronik">Elektronik</option>
-                            <option value="Perlengkapan">Perlengkapan</option>
-                            <option value="Lainnya">Lainnya</option>
-                        </select>
+                        <label class="form-label fw-semibold">Kategori *</label>
+                        <select name="kategori" class="form-select rounded-pill"><option value="Buku">Buku</option><option value="Alat Tulis">Alat Tulis</option><option value="Elektronik">Elektronik</option><option value="Perlengkapan">Perlengkapan</option><option value="Lainnya">Lainnya</option></select>
                         <input type="text" name="kategori_manual" class="form-control rounded-pill mt-2" placeholder="Atau ketik kategori lain">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Stok</label>
-                        <input type="number" name="stok" class="form-control rounded-pill" value="1" min="1" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Harga Barang (Rp)</label>
-                        <input type="number" name="harga" class="form-control rounded-pill" value="0" min="0" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Deskripsi</label>
-                        <textarea name="deskripsi" class="form-control rounded-3" rows="2"></textarea>
-                    </div>
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle me-1"></i>QR Code akan digenerate otomatis dari barcode.
-                    </small>
+                    <div class="mb-3"><label class="form-label fw-semibold">Stok</label><input type="number" name="stok" class="form-control rounded-pill" value="1" min="1" required></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Gambar Barang</label><input type="file" name="gambar" class="form-control rounded-pill" accept="image/jpeg,image/png,image/jpg,image/webp"><small class="text-muted">Format JPG, PNG, WebP (max 2MB)</small></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Deskripsi</label><textarea name="deskripsi" class="form-control rounded-3" rows="2"></textarea></div>
                 </div>
                 <div class="modal-footer border-0 bg-white pb-4 px-4">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
@@ -178,117 +134,48 @@ $items = $itemObj->getAllItems();
     </div>
 </div>
 
-<!-- Modal Lihat QR Code (besar) -->
-<div class="modal fade" id="viewQRModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content rounded-4 border-0 shadow text-center p-4">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-semibold" id="viewQRTitle">QR Code Barang</h5>
+<!-- Modal Lihat Detail Barang (responsif) -->
+<div class="modal fade" id="viewItemModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 bg-white">
+                <h5 class="modal-title fw-semibold">Detail Barang</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div id="viewQRContainer" style="display: flex; justify-content: center;"></div>
-                <p class="mt-3 font-monospace" id="viewQRText"></p>
-                <p class="text-muted small">Scan QR code ini menggunakan kamera siswa</p>
-                <button id="downloadQRBtn" class="btn btn-primary rounded-pill mt-2"><i class="fas fa-download"></i> Unduh QR (PNG)</button>
+            <div class="modal-body p-4">
+                <div class="text-center mb-3">
+                    <img id="viewItemImage" src="" width="100" height="100" class="rounded border" style="object-fit: cover;">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-borderless">
+                        <tr><th style="width: 35%;">Nama Barang</th><td id="viewItemName"> </td></tr>
+                        <tr><th>Kategori</th><td id="viewItemCategory"> </td></tr>
+                        <tr><th>Stok</th><td id="viewItemStock"> </td></tr>
+                        <tr><th>Status</th><td id="viewItemStatus"> </td></tr>
+                        <tr><th>Deskripsi</th><td id="viewItemDesc"> </td></tr>
+                    </table>
+                </div>
             </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Tutup</button>
+            <div class="modal-footer border-0 bg-white pb-4">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
-    // Generate QR code untuk setiap item
-    <?php foreach ($items as $item): ?>
-        new QRCode(document.getElementById("qrcode-<?= $item['id'] ?>"), {
-            text: "<?= $item['barcode'] ?>",
-            width: 100,
-            height: 100,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
-    <?php endforeach; ?>
-
-    // Override kategori manual
-    document.querySelector('form').addEventListener('submit', function(e) {
-        let select = document.querySelector('select[name="kategori"]');
-        let manual = document.querySelector('input[name="kategori_manual"]');
-        if (manual.value.trim() !== '') {
-            select.disabled = true;
-            let hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = 'kategori';
-            hidden.value = manual.value.trim();
-            this.appendChild(hidden);
-        }
-    });
-
-    // Fungsi download QR code (ukuran besar 300x300)
-    document.querySelectorAll('.download-qrcode').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const barcodeText = this.getAttribute('data-barcode');
-            const itemName = this.getAttribute('data-name');
-            
-            const tempDiv = document.createElement('div');
-            const qr = new QRCode(tempDiv, {
-                text: barcodeText,
-                width: 300,
-                height: 300,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            setTimeout(() => {
-                const img = tempDiv.querySelector('img');
-                if (img) {
-                    const link = document.createElement('a');
-                    link.download = `qr_${barcodeText}.png`;
-                    link.href = img.src;
-                    link.click();
-                }
-            }, 100);
-        });
-    });
-
-    // Modal lihat QR
-    const viewModal = new bootstrap.Modal(document.getElementById('viewQRModal'));
-    let currentQRImageSrc = null;
-    document.querySelectorAll('.view-qrcode').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const barcodeText = this.getAttribute('data-barcode');
-            const itemName = this.getAttribute('data-name');
-            const container = document.getElementById('viewQRContainer');
-            container.innerHTML = '';
-            const qr = new QRCode(container, {
-                text: barcodeText,
-                width: 200,
-                height: 200,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            document.getElementById('viewQRText').innerText = barcodeText;
-            document.getElementById('viewQRTitle').innerHTML = `<i class="fas fa-qrcode me-2"></i>${itemName}`;
-            setTimeout(() => {
-                const img = container.querySelector('img');
-                if (img) currentQRImageSrc = img.src;
-            }, 100);
-            viewModal.show();
-        });
-    });
-
-    // Download QR dari modal
-    document.getElementById('downloadQRBtn').addEventListener('click', function() {
-        if (currentQRImageSrc) {
-            const link = document.createElement('a');
-            link.download = 'qr_code.png';
-            link.href = currentQRImageSrc;
-            link.click();
-        }
+    const viewModal = document.getElementById('viewItemModal');
+    viewModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        document.getElementById('viewItemName').innerText = button.getAttribute('data-name');
+        document.getElementById('viewItemCategory').innerText = button.getAttribute('data-kategori');
+        document.getElementById('viewItemStock').innerText = button.getAttribute('data-stok');
+        document.getElementById('viewItemDesc').innerText = button.getAttribute('data-deskripsi');
+        const status = button.getAttribute('data-status');
+        document.getElementById('viewItemStatus').innerHTML = `<span class="badge ${status=='tersedia'?'badge-soft-success':(status=='dipinjam'?'badge-soft-warning':'badge-soft-danger')} px-3 py-1">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+        const gambar = button.getAttribute('data-gambar');
+        const imgElement = document.getElementById('viewItemImage');
+        imgElement.src = (gambar && gambar !== '') ? '../' + gambar : 'https://placehold.co/100x100?text=No+Image';
     });
 </script>
 
@@ -296,8 +183,9 @@ $items = $itemObj->getAllItems();
     .badge-soft-success { background-color: #e3f7ec; color: #0b5e42; }
     .badge-soft-warning { background-color: #feefd0; color: #b85c00; }
     .badge-soft-danger { background-color: #fee7e7; color: #b91c1c; }
-    .table tbody tr:hover { background-color: #f9fbfe !important; }
-    .table-light th { font-weight: 600; font-size: 0.8rem; letter-spacing: 0.3px; color: #1f4973; }
+    @media (max-width: 768px) {
+        .table td, .table th { padding: 0.5rem; }
+        .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.7rem; }
+    }
 </style>
-
 <?php include '../includes/footer.php'; ?>

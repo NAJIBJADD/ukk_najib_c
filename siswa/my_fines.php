@@ -22,8 +22,11 @@ $loans = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <?php include '../includes/navbar.php'; ?>
 <div class="container mt-4">
     <div class="card shadow">
-        <div class="card-header bg-info text-white">
-            <h5><i class="fas fa-money-bill-wave"></i> Riwayat Denda Saya</h5>
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Riwayat Denda Saya</h5>
+            <a href="dashboard.php" class="btn btn-sm btn-light rounded-pill">
+                <i class="fas fa-arrow-left me-1"></i> Kembali
+            </a>
         </div>
         <div class="card-body">
             <?php if (empty($loans)): ?>

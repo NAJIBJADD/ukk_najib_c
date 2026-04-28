@@ -6,17 +6,17 @@ class DendaPayment {
         $this->db = Database::getInstance()->getConnection();
     }
 
-    public function createRequest(int $loanId, int $petugasId, int $amount, string $note = ''): bool {
+    public function createRequest(int $loanId, int $petugasId, int $amount, string $note = '', string $gambar = ''): bool {
         $stmt = $this->db->prepare("
-            INSERT INTO denda_payments (loan_id, petugas_id, jumlah_denda, tgl_request, status, catatan) 
-            VALUES (?, ?, ?, NOW(), 'pending', ?)
+            INSERT INTO denda_payments (loan_id, petugas_id, jumlah_denda, tgl_request, status, catatan, gambar) 
+            VALUES (?, ?, ?, NOW(), 'pending', ?, ?)
         ");
-        return $stmt->execute([$loanId, $petugasId, $amount, $note]);
+        return $stmt->execute([$loanId, $petugasId, $amount, $note, $gambar]);
     }
 
     public function getPendingRequests(): array {
         $stmt = $this->db->query("
-            SELECT dp.*, l.id_siswa, u.nama_lengkap AS siswa, i.nama_item, p.nama_lengkap AS petugas
+            SELECT dp.*, l.id_siswa, u.nama_lengkap AS siswa, i.nama_item, i.gambar AS gambar_barang, p.nama_lengkap AS petugas
             FROM denda_payments dp
             JOIN loans l ON dp.loan_id = l.id
             JOIN users u ON l.id_siswa = u.id

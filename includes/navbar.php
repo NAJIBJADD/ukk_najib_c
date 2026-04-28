@@ -5,9 +5,9 @@ if (!isset($_SESSION['role'])) {
 }
 $role = $_SESSION['role'];
 ?>
-<nav class="navbar bg-white" style="box-shadow: 0 2px 12px rgba(0,0,0,0.02); border-bottom: 1px solid #eef2fa;">
+<nav class="navbar bg-white" style="box-shadow: 0 2px 12px rgba(0,0,0,0.02); border-bottom: 1px solid #fcfcfc;">
     <div class="container">
-        <a class="navbar-brand" href="<?= $role ?>/dashboard.php" style="font-weight: 800; font-size: 1.3rem; background: linear-gradient(135deg, #1e3a8a, #2a6df4); -webkit-background-clip: text; background-clip: text; color: transparent;">
+        <a class="navbar-brand" href="<?= $role ?>/dashboard.php" style="font-weight: 700; font-size: 1.4rem; color: #c44536;">
             <i class="fas fa-book-open me-2"></i> Perpustakaan Digital
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,6 +22,8 @@ $role = $_SESSION['role'];
                     <li class="nav-item"><a class="nav-link" href="../admin/report.php"><i class="fas fa-chart-line me-1"></i> Laporan</a></li>
                     <li class="nav-item"><a class="nav-link" href="../admin/manage_payments.php"><i class="fas fa-hand-holding-usd me-1"></i> Persetujuan Denda</a></li>
                     <li class="nav-item"><a class="nav-link" href="../admin/manage_return_requests.php"><i class="fas fa-undo-alt me-1"></i> Persetujuan Pengembalian</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../admin/activity_log.php"><i class="fas fa-history me-1"></i> Aktivitas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../admin/manage_delete_requests.php"><i class="fas fa-trash-alt me-1"></i> Hapus Peminjaman</a></li>
                 <?php elseif($role == 'petugas'): ?>
                     <li class="nav-item"><a class="nav-link" href="../petugas/dashboard.php"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="../petugas/search_loan.php"><i class="fas fa-search me-1"></i> Cari Pinjaman</a></li>

@@ -18,7 +18,7 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
 
 <?php if ($has_late): ?>
 <div class="container mt-2">
-    <div class="alert alert-danger text-center blink-red">
+    <div class="alert alert-danger text-center blink-red" role="alert">
         <i class="fas fa-bell"></i> PERINGATAN! Ada peminjaman yang melewati batas waktu! Segera kembalikan!
     </div>
 </div>
@@ -26,120 +26,130 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
 <?php endif; ?>
 
 <div class="container mt-4">
-    <!-- Kartu QR Code Identitas Siswa -->
-    <div class="card shadow mb-4">
-        <div class="card-header bg-info text-white">
-            <h5><i class="fas fa-id-card"></i> Kartu Identitas Siswa</h5>
-        </div>
-        <div class="card-body text-center">
-            <p>Scan QR code di bawah ini oleh petugas untuk identifikasi Anda.</p>
-            <div id="qrcode" style="display: inline-block; margin: 0 auto;"></div>
-            <p class="mt-2">
-                <strong><?= htmlspecialchars($_SESSION['nama']) ?></strong><br>
-                NIS: <?= htmlspecialchars($_SESSION['nis'] ?? '-') ?><br>
-                (<?= htmlspecialchars($_SESSION['username']) ?> | ID: <?= $_SESSION['user_id'] ?>)
-            </p>
-            <div class="mt-3">
-                <button class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#qrModal">
-                    <i class="fas fa-expand"></i> Perbesar QR Code
-                </button>
-                <button class="btn btn-sm btn-success" id="downloadQRBtn">
-                    <i class="fas fa-download"></i> Download QR
-                </button>
-                <button class="btn btn-sm btn-secondary" onclick="printQRCode()">
-                    <i class="fas fa-print"></i> Cetak QR Code
-                </button>
+    <div class="row g-4">
+        <!-- Kolom Kiri: QR Code Identitas - untuk tablet: 5 kolom, untuk desktop: 4 kolom -->
+        <div class="col-12 col-md-5 col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5><i class="fas fa-id-card"></i> Kartu Identitas Siswa</h5>
+                </div>
+                <div class="card-body text-center">
+                    <p>Scan QR code di bawah ini oleh petugas untuk identifikasi Anda.</p>
+                    <div id="qrcode" style="display: inline-block; margin: 0 auto; max-width: 100%;"></div>
+                    <p class="mt-2">
+                        <strong><?= htmlspecialchars($_SESSION['nama']) ?></strong><br>
+                        NIS: <?= htmlspecialchars($_SESSION['nis'] ?? '-') ?><br>
+                        (<?= htmlspecialchars($_SESSION['username']) ?> | ID: <?= $_SESSION['user_id'] ?>)
+                    </p>
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#qrModal">
+                            <i class="fas fa-expand"></i> Perbesar QR
+                        </button>
+                        <button class="btn btn-sm btn-success" id="downloadQRBtn">
+                            <i class="fas fa-download"></i> Download QR
+                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="printQRCode()">
+                            <i class="fas fa-print"></i> Cetak QR
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Riwayat Peminjaman Aktif & Selesai -->
-    <div class="card shadow mb-4">
-        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-            <h4><i class="fas fa-hand-holding"></i> Riwayat Peminjaman</h4>
-            <a href="request_item.php" class="btn btn-light btn-sm rounded-pill">
-                <i class="fas fa-hand-holding"></i> Ajukan Peminjaman Baru
-            </a>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Barang</th>
-                            <th>Kategori</th>
-                            <th>Tgl Pinjam</th>
-                            <th>Batas Waktu</th>
-                            <th>Status</th>
-                            <th>Denda</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($loans as $loan): 
-                            $item = $itemObj->getItemById($loan['id_item']);
-                            $kategori = $item['kategori'] ?? '-';
-                            $is_late = ($loan['status'] == 'dipinjam' && strtotime($loan['batas_waktu']) < time());
-                            $badge = $is_late ? 'danger' : ($loan['status'] == 'dipinjam' ? 'warning' : 'success');
-                        ?>
-                        <tr class="<?= $is_late ? 'table-danger' : '' ?>">
-                            <td><?= htmlspecialchars($loan['nama_item']) ?></td>
-                            <td><?= htmlspecialchars($kategori) ?></td>
-                            <td><?= $loan['tgl_pinjam'] ?></td>
-                            <td><?= $loan['batas_waktu'] ?></td>
-                            <td><span class="badge bg-<?= $badge ?>"><?= strtoupper($loan['status']) ?></span></td>
-                            <td>Rp <?= number_format($loan['denda'], 0, ',', '.') ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                        <?php if (empty($loans)): ?>
-                            <tr><td colspan="6" class="text-center">Belum ada riwayat peminjaman</span></td>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+        <!-- Kolom Kanan: Riwayat Peminjaman - untuk tablet: 7 kolom, untuk desktop: 8 kolom -->
+        <div class="col-12 col-md-7 col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white d-flex flex-wrap justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-hand-holding"></i> Riwayat Peminjaman</h4>
+                    <a href="request_item.php" class="btn btn-light btn-sm rounded-pill mt-2 mt-sm-0">
+                        <i class="fas fa-hand-holding"></i> Ajukan Peminjaman Baru
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Barang</th>
+                                    <th>Kategori</th>
+                                    <th>Tgl Pinjam</th>
+                                    <th>Batas Waktu</th>
+                                    <th>Status</th>
+                                    <th>Denda</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($loans as $loan): 
+                                    $item = $itemObj->getItemById($loan['id_item']);
+                                    $kategori = $item['kategori'] ?? '-';
+                                    $is_late = ($loan['status'] == 'dipinjam' && strtotime($loan['batas_waktu']) < time());
+                                    $badge = $is_late ? 'danger' : ($loan['status'] == 'dipinjam' ? 'warning' : 'success');
+                                ?>
+                                    <tr class="<?= $is_late ? 'table-danger' : '' ?>">
+                                        <td><?= htmlspecialchars($loan['nama_item']) ?></td>
+                                        <td><?= htmlspecialchars($kategori) ?></td>
+                                        <td><?= $loan['tgl_pinjam'] ?></td>
+                                        <td><?= $loan['batas_waktu'] ?></td>
+                                        <td><span class="badge bg-<?= $badge ?>"><?= strtoupper($loan['status']) ?></span></td>
+                                        <td>Rp <?= number_format($loan['denda'], 0, ',', '.') ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                <?php if (empty($loans)): ?>
+                                    <tr>
+                                        <td colspan="6" class="text-center">Belum ada riwayat peminjaman</span>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Riwayat Permintaan (Termasuk Ditolak) -->
-    <div class="card shadow">
-        <div class="card-header bg-warning text-dark">
-            <h4><i class="fas fa-envelope"></i> Riwayat Permintaan Peminjaman</h4>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Barang</th>
-                            <th>Kategori</th>
-                            <th>Tgl Request</th>
-                            <th>Status</th>
-                            <th>Catatan / Alasan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($requests as $req): 
-                            $item = $itemObj->getItemById($req['id_item']);
-                            $kategori = $item['kategori'] ?? '-';
-                            $status_badge = '';
-                            if ($req['status'] == 'pending') $status_badge = 'warning';
-                            elseif ($req['status'] == 'disetujui') $status_badge = 'success';
-                            else $status_badge = 'danger';
-                        ?>
-                        <tr>
-                            <td><?= htmlspecialchars($req['nama_item']) ?></td>
-                            <td><?= htmlspecialchars($kategori) ?></td>
-                            <td><?= $req['tgl_request'] ?></td>
-                            <td><span class="badge bg-<?= $status_badge ?>"><?= strtoupper($req['status']) ?></span></td>
-                            <td><?= htmlspecialchars($req['catatan'] ?: '-') ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                        <?php if (empty($requests)): ?>
-                            <tr><td colspan="5" class="text-center">Belum ada permintaan</span></td>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+            <!-- Riwayat Permintaan (Termasuk Ditolak) -->
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4><i class="fas fa-envelope"></i> Riwayat Permintaan Peminjaman</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Barang</th>
+                                    <th>Kategori</th>
+                                    <th>Tgl Request</th>
+                                    <th>Status</th>
+                                    <th>Catatan / Alasan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($requests as $req): 
+                                    $item = $itemObj->getItemById($req['id_item']);
+                                    $kategori = $item['kategori'] ?? '-';
+                                    $status_badge = '';
+                                    if ($req['status'] == 'pending') $status_badge = 'warning';
+                                    elseif ($req['status'] == 'disetujui') $status_badge = 'success';
+                                    else $status_badge = 'danger';
+                                ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($req['nama_item']) ?></td>
+                                        <td><?= htmlspecialchars($kategori) ?></td>
+                                        <td><?= $req['tgl_request'] ?></td>
+                                        <td><span class="badge bg-<?= $status_badge ?>"><?= strtoupper($req['status']) ?></span></td>
+                                        <td><?= htmlspecialchars($req['catatan'] ?: '-') ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                <?php if (empty($requests)): ?>
+                                    <tr>
+                                        <td colspan="5" class="text-center">Belum ada permintaan</span>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <small class="text-muted fst-italic">* Permintaan yang ditolak tidak dikenakan denda. Denda hanya berlaku pada peminjaman yang sudah disetujui dan terlambat/rusak/hilang.</small>
+                </div>
             </div>
-            <small class="text-muted fst-italic">* Permintaan yang ditolak tidak dikenakan denda. Denda hanya berlaku pada peminjaman yang sudah disetujui dan terlambat/rusak/hilang.</small>
         </div>
     </div>
 </div>
@@ -169,9 +179,8 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
     let studentId = "<?= $_SESSION['user_id'] ?>";
-    let qrData = studentId;
     let qrcode = new QRCode(document.getElementById("qrcode"), {
-        text: qrData,
+        text: studentId,
         width: 150,
         height: 150,
         colorDark: "#000000",
@@ -195,7 +204,7 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
     }
 
     document.getElementById('downloadQRBtn').addEventListener('click', function() {
-        let qrImg = document.querySelector('#qrcode img');
+        let qrImg = document.querySelector("#qrcode img");
         if (qrImg) {
             let link = document.createElement('a');
             link.download = 'qr_siswa.png';
@@ -225,6 +234,13 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
     0% { background-color: #f8d7da; color: black; }
     50% { background-color: #dc3545; color: white; }
     100% { background-color: #f8d7da; color: black; }
+}
+/* Tambahan untuk responsif QR code di modal */
+@media (max-width: 576px) {
+    #qrBig canvas {
+        max-width: 100%;
+        height: auto;
+    }
 }
 </style>
 
