@@ -1,10 +1,10 @@
 <?php
 require_once '../includes/autoload.php';
-if ($_SESSION['role'] != 'petugas') {
+if ($_SESSION['role'] !== 'petugas') {
     header("Location: ../login.php");
     exit;
 }
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['loan_id'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['loan_id'])) {
     $loanId = (int)$_POST['loan_id'];
     $alasan = trim($_POST['alasan']);
     $deleteReq = new DeleteRequest();
@@ -17,4 +17,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['loan_id'])) {
     exit;
 }
 header("Location: all_loans.php");
+exit;
 ?>

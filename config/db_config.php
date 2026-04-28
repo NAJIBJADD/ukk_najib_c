@@ -10,4 +10,5 @@ try {
 } catch(PDOException $e) {
     die("Koneksi database gagal: " . $e->getMessage());
 }
+$pdo->exec("SET time_zone = '+07:00'");
 ?>

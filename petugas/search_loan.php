@@ -99,8 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                                     <td><?= htmlspecialchars($row['siswa']) ?></td>
                                     <td><?= htmlspecialchars($row['nis'] ?? '-') ?></td>
                                     <td><?= htmlspecialchars($row['nama_item']) ?></td>
-                                    <td><?= $row['tgl_pinjam'] ?></td>
-                                    <td><?= $row['batas_waktu'] ?></td>
+                                    <td><?= time_elapsed_string($row['tgl_pinjam']) ?></td>
+                                    <td><?= time_elapsed_string($row['batas_waktu']) ?></td>
                                     <td><?= $row['status'] ?></td>
                                     <td>Rp <?= number_format($row['denda'],0,',','.') ?></td>
                                     <td>

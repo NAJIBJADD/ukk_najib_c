@@ -57,24 +57,68 @@ class User {
                 $data['rombel'] ?? null,
                 $data['nis'] ?? null
             ]);
-            if ($result) {
-                return true;
-            } else {
-                $error = $stmt->errorInfo();
-                error_log("PDO Error: " . print_r($error, true));
-                return false;
-            }
+            return $result;
         } catch (PDOException $e) {
             error_log("Create user exception: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // --- METHOD UPDATE YANG DITAMBAHKAN ---
+    public function updateUser($data) {
+        try {
+            // Jika password diisi, sertakan dalam query update
+            if (!empty($data['password'])) {
+                $sql = "UPDATE users SET 
+                        username = ?, 
+                        password = ?, 
+                        nama_lengkap = ?, 
+                        role = ?, 
+                        rayon = ?, 
+                        rombel = ?, 
+                        nis = ? 
+                        WHERE id = ?";
+                $params = [
+                    $data['username'],
+                    password_hash($data['password'], PASSWORD_DEFAULT),
+                    $data['nama_lengkap'],
+                    $data['role'],
+                    $data['rayon'],
+                    $data['rombel'],
+                    $data['nis'],
+                    $data['id']
+                ];
+            } else {
+                // Jika password kosong, update kolom lainnya saja
+                $sql = "UPDATE users SET 
+                        username = ?, 
+                        nama_lengkap = ?, 
+                        role = ?, 
+                        rayon = ?, 
+                        rombel = ?, 
+                        nis = ? 
+                        WHERE id = ?";
+                $params = [
+                    $data['username'],
+                    $data['nama_lengkap'],
+                    $data['role'],
+                    $data['rayon'],
+                    $data['rombel'],
+                    $data['nis'],
+                    $data['id']
+                ];
+            }
+            
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute($params);
+        } catch (PDOException $e) {
+            error_log("Update user exception: " . $e->getMessage());
             return false;
         }
     }
     
     public function deleteUser($id, $currentUserId) {
         if ($id == $currentUserId) return false;
-        $stmt = $this->db->prepare("SELECT id FROM users WHERE id = ?");
-        $stmt->execute([$id]);
-        if (!$stmt->fetch()) return false;
         
         $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
         return $stmt->execute([$id]);

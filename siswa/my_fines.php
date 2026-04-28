@@ -46,8 +46,8 @@ $loans = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             ?>
                             <tr>
                                 <td><?= htmlspecialchars($loan['nama_item']) ?></td>
-                                <td><?= $loan['tgl_pinjam'] ?></td>
-                                <td><?= $loan['tgl_kembali'] ?? '-' ?></td>
+                                <td><?= time_elapsed_string($loan['tgl_pinjam']) ?></td>
+                                <td><?= $loan['tgl_kembali'] ? time_elapsed_string($loan['tgl_kembali']) : '-' ?></td>
                                 <td><?= $loan['status'] ?></td>
                                 <td>Rp <?= number_format($denda,0,',','.') ?></td>
                                 <td><?= $statusDenda ?></td>

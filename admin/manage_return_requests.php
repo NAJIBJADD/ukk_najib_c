@@ -44,7 +44,7 @@ $requests = $rr->getPendingRequests();
                                 <td><?= $req['status_return'] ?></td>
                                 <td>Rp <?= number_format($req['denda_tambahan'],0,',','.') ?></td>
                                 <td><?= htmlspecialchars($req['petugas']) ?></td>
-                                <td><?= $req['tgl_request'] ?></td>
+                                <td><?= time_elapsed_string($req['tgl_request']) ?></td>
                                 <td><?= htmlspecialchars($req['catatan'] ?: '-') ?></td>
                                 <td>
                                     <a href="?approve=<?= $req['id'] ?>" class="btn btn-success btn-sm" onclick="return confirm('Setujui pengembalian ini? Denda akan dihitung otomatis.')">Setujui</a>

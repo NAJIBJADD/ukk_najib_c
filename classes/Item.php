@@ -17,16 +17,12 @@ class Item {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
-    public function getItemByBarcode($barcode) {
-        $stmt = $this->db->prepare("SELECT * FROM items WHERE barcode = ? AND status = 'tersedia' AND stok > 0");
-        $stmt->execute([$barcode]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
+    // Method getItemByBarcode dihapus karena kolom barcode tidak ada
     
     public function addItem($nama, $kategori, $deskripsi, $stok, $gambar = '') {
-        $barcode = 'BAR-' . strtoupper(uniqid());
-        $stmt = $this->db->prepare("INSERT INTO items (barcode, nama_item, kategori, deskripsi, stok, gambar) VALUES (?, ?, ?, ?, ?, ?)");
-        return $stmt->execute([$barcode, $nama, $kategori, $deskripsi, $stok, $gambar]);
+        // Hapus barcode dari INSERT
+        $stmt = $this->db->prepare("INSERT INTO items (nama_item, kategori, deskripsi, stok, gambar) VALUES (?, ?, ?, ?, ?)");
+        return $stmt->execute([$nama, $kategori, $deskripsi, $stok, $gambar]);
     }
     
     public function updateItem($id, $nama, $kategori, $deskripsi, $status, $stok, $gambar) {

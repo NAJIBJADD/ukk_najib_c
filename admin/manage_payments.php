@@ -57,7 +57,7 @@ $requests = $paymentManager->getPendingRequests();
                                      </span>
                                     <td>Rp <?= number_format($req['jumlah_denda'],0,',','.') ?> </span>
                                     <td><?= htmlspecialchars($req['petugas']) ?> </span>
-                                    <td><?= $req['tgl_request'] ?> </span>
+                                    <td><?= time_elapsed_string($req['tgl_request']) ?></td>
                                     <td><?= htmlspecialchars($req['catatan'] ?: '-') ?> </span>
                                     <td>
                                         <?php if (!empty($req['gambar']) && file_exists("../".$req['gambar'])): ?>

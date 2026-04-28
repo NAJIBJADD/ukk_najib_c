@@ -20,8 +20,8 @@ $role = $_SESSION['role'];
                     <li class="nav-item"><a class="nav-link" href="../admin/manage_items.php"><i class="fas fa-box me-1"></i> Barang</a></li>
                     <li class="nav-item"><a class="nav-link" href="../admin/manage_users.php"><i class="fas fa-users me-1"></i> Users</a></li>
                     <li class="nav-item"><a class="nav-link" href="../admin/report.php"><i class="fas fa-chart-line me-1"></i> Laporan</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../admin/manage_payments.php"><i class="fas fa-hand-holding-usd me-1"></i> Persetujuan Denda</a></li>
                     <li class="nav-item"><a class="nav-link" href="../admin/manage_return_requests.php"><i class="fas fa-undo-alt me-1"></i> Persetujuan Pengembalian</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../admin/manage_payments.php"><i class="fas fa-hand-holding-usd me-1"></i> Persetujuan Denda</a></li>
                     <li class="nav-item"><a class="nav-link" href="../admin/activity_log.php"><i class="fas fa-history me-1"></i> Aktivitas</a></li>
                     <li class="nav-item"><a class="nav-link" href="../admin/manage_delete_requests.php"><i class="fas fa-trash-alt me-1"></i> Hapus Peminjaman</a></li>
                 <?php elseif($role == 'petugas'): ?>

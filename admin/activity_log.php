@@ -59,7 +59,7 @@ $logs = $logManager->getAllLogs();
                                     <td><?= htmlspecialchars($log['nama_lengkap']) ?> (ID: <?= $log['user_id'] ?>)</span>
                                     <td><?= htmlspecialchars($log['kegiatan']) ?> </span>
                                     <td><?= htmlspecialchars($log['keterangan'] ?: '-') ?> </span>
-                                    <td><?= $log['timestamp'] ?> </span>
+                                    <td><?= time_elapsed_string($log['timestamp']) ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

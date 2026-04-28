@@ -197,7 +197,7 @@ if (isset($_POST['action']) && isset($_POST['request_id'])) {
                                             <tr>
                                                 <td><?= $req['id'] ?></td>
                                                 <td><?= htmlspecialchars($req['nama_item']) ?></td>
-                                                <td><?= $req['tgl_request'] ?></td>
+                                                <td><?= time_elapsed_string($req['tgl_request']) ?></td>
                                                 <td><?= $req['requested_return_date'] ?? '-' ?></td>
                                                 <td><?= htmlspecialchars($req['catatan']) ?></td>
                                                 <td>

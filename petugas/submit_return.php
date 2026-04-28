@@ -17,9 +17,9 @@ if (!$loan || $loan['status'] !== 'dipinjam') {
     header("Location: search_loan.php");
     exit;
 }
-// Ambil detail barang dan siswa
+// Ambil detail barang dan siswa (tanpa harga)
 $pdo = Database::getInstance()->getConnection();
-$stmt = $pdo->prepare("SELECT l.*, i.nama_item, i.harga, u.nama_lengkap AS siswa FROM loans l JOIN items i ON l.id_item = i.id JOIN users u ON l.id_siswa = u.id WHERE l.id = ?");
+$stmt = $pdo->prepare("SELECT l.*, i.nama_item, u.nama_lengkap AS siswa FROM loans l JOIN items i ON l.id_item = i.id JOIN users u ON l.id_siswa = u.id WHERE l.id = ?");
 $stmt->execute([$loanId]);
 $detail = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -46,14 +46,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p><strong>Siswa:</strong> <?= htmlspecialchars($detail['siswa']) ?></p>
             <p><strong>Tanggal Pinjam:</strong> <?= $detail['tgl_pinjam'] ?></p>
             <p><strong>Batas Waktu:</strong> <?= $detail['batas_waktu'] ?></p>
-            <p><strong>Harga Barang:</strong> Rp <?= number_format($detail['harga'], 0, ',', '.') ?></p>
             <form method="POST">
                 <div class="mb-3">
                     <label class="form-label">Kondisi Barang <span class="text-danger">*</span></label>
                     <select name="status" class="form-select" required>
                         <option value="kembali">Baik (kembali) – tidak ada denda tambahan</option>
-                        <option value="rusak">Rusak – denda 50% dari harga barang</option>
-                        <option value="hilang">Hilang – denda 100% dari harga barang (ganti rugi)</option>
+                        <option value="rusak">Rusak – denda Rp50.000</option>
+                        <option value="hilang">Hilang – denda Rp200.000 (ganti rugi)</option>
                     </select>
                 </div>
                 <div class="mb-3">

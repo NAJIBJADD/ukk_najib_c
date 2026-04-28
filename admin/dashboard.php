@@ -5,16 +5,16 @@ if ($_SESSION['role'] !== 'admin') {
     exit;
 }
 
-$itemObj = new Item();
-$loanObj = new Loan();
-$userObj = new User();
+$itemManager = new Item();
+$loanManager = new Loan();
+$userManager = new User();
 $logManager = new Log();
 
-$total_items = count($itemObj->getAllItems());
-$total_loans = count($loanObj->getAllLoans());
-$total_users = count($userObj->getAllUsers());
+$totalItems = count($itemManager->getAllItems());
+$totalLoans = count($loanManager->getAllLoans());
+$totalUsers = count($userManager->getAllUsers());
 
-// Activity log terbaru
+// Ambil 5 log terbaru untuk ditampilkan di dashboard
 $recentLogs = $logManager->getLatestLogs(5);
 ?>
 <?php include '../includes/header.php'; ?>
@@ -23,39 +23,39 @@ $recentLogs = $logManager->getLatestLogs(5);
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3" style="color: #1a344d;"><i class="fas fa-tachometer-alt me-2"></i> Dashboard Admin</h1>
     </div>
+
+    <!-- Statistik Cards (tanpa keterlambatan) -->
     <div class="row g-4">
-        <!-- Total Barang -->
         <div class="col-md-4">
             <a href="manage_items.php" class="text-decoration-none">
-                <div class="stat-card text-center" style="background: linear-gradient(145deg, #eef2ff, #ffffff); border-top: 4px solid #2a6df4;">
-                    <div class="icon" style="color: #2a6df4;"><i class="fas fa-box fa-2x"></i></div>
-                    <p class="mt-2 mb-1 text-uppercase fw-semibold">Total Barang</p>
-                    <h2 class="fw-bold"><?= $total_items ?></h2>
+                <div class="stat-card text-center p-3 bg-white rounded-4 shadow-sm">
+                    <i class="fas fa-box fa-2x text-primary"></i>
+                    <p class="mt-2 mb-0 text-muted">Total Barang</p>
+                    <h2 class="fw-bold"><?= $totalItems ?></h2>
                 </div>
             </a>
         </div>
-        <!-- Laporan Peminjaman -->
         <div class="col-md-4">
-            <a href="report.php" class="text-decoration-none">
-                <div class="stat-card text-center" style="background: linear-gradient(145deg, #e6f7ec, #ffffff); border-top: 4px solid #10b981;">
-                    <div class="icon" style="color: #10b981;"><i class="fas fa-hand-holding fa-2x"></i></div>
-                    <p class="mt-2 mb-1 text-uppercase fw-semibold">Laporan Peminjaman</p>
-                    <h2 class="fw-bold"><?= $total_loans ?></h2>
+            <a href="manage_loans.php" class="text-decoration-none">
+                <div class="stat-card text-center p-3 bg-white rounded-4 shadow-sm">
+                    <i class="fas fa-hand-holding fa-2x text-success"></i>
+                    <p class="mt-2 mb-0 text-muted">Total Peminjaman</p>
+                    <h2 class="fw-bold"><?= $totalLoans ?></h2>
                 </div>
             </a>
         </div>
-        <!-- Total Pengguna -->
         <div class="col-md-4">
             <a href="manage_users.php" class="text-decoration-none">
-                <div class="stat-card text-center" style="background: linear-gradient(145deg, #fffbeb, #ffffff); border-top: 4px solid #f59e0b;">
-                    <div class="icon" style="color: #f59e0b;"><i class="fas fa-users fa-2x"></i></div>
-                    <p class="mt-2 mb-1 text-uppercase fw-semibold">Total Pengguna</p>
-                    <h2 class="fw-bold"><?= $total_users ?></h2>
+                <div class="stat-card text-center p-3 bg-white rounded-4 shadow-sm">
+                    <i class="fas fa-users fa-2x text-warning"></i>
+                    <p class="mt-2 mb-0 text-muted">Total Pengguna</p>
+                    <h2 class="fw-bold"><?= $totalUsers ?></h2>
                 </div>
             </a>
         </div>
     </div>
 
+    <!-- Log Aktivitas Terbaru (dengan diff for human) -->
     <div class="row mt-5">
         <div class="col-12">
             <div class="card shadow-sm border-0 rounded-4">
@@ -74,7 +74,7 @@ $recentLogs = $logManager->getLatestLogs(5);
                                         <strong><?= htmlspecialchars($log['nama_lengkap']) ?></strong><br>
                                         <small><?= htmlspecialchars($log['kegiatan']) ?> – <?= htmlspecialchars($log['keterangan'] ?: '-') ?></small>
                                     </div>
-                                    <small class="text-muted"><?= $log['timestamp'] ?></small>
+                                    <small class="text-muted"><?= time_elapsed_string($log['timestamp']) ?></small>
                                 </div>
                             <?php endforeach; ?>
                         </div>

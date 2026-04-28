@@ -155,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['item_id'])) {
                                             <i class="fas fa-image text-muted"></i>
                                         <?php endif; ?>
                                      </span>
-                                    <td><?= $req['tgl_request'] ?> </span>
+                                    <td><?= time_elapsed_string($req['tgl_request']) ?></td>
                                     <td><?= $req['requested_return_date'] ?? '-' ?> </span>
                                     <td>
                                         <?php if ($req['status'] == 'pending'): ?>

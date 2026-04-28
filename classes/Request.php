@@ -35,7 +35,16 @@ class Request {
     }
     
     /**
+     * Hapus request berdasarkan ID
+     */
+    public function deleteRequest($requestId) {
+        $stmt = $this->db->prepare("DELETE FROM requests WHERE id = ?");
+        return $stmt->execute([$requestId]);
+    }
+    
+    /**
      * Update status request, jika disetujui maka buat peminjaman dengan batas waktu sesuai requested_return_date.
+     * Setelah berhasil membuat peminjaman, hapus request.
      */
     public function updateRequestStatus($requestId, $status, $petugasId) {
         $stmt = $this->db->prepare("UPDATE requests SET status = ? WHERE id = ?");
@@ -51,17 +60,16 @@ class Request {
                 } else {
                     $batas_waktu = date('Y-m-d H:i:s', strtotime('+7 days'));
                 }
-                $tgl_pinjam = date('Y-m-d H:i:s');
-                $insertLoan = $this->db->prepare("INSERT INTO loans (id_siswa, id_item, tgl_pinjam, batas_waktu, status) VALUES (?, ?, ?, ?, 'dipinjam')");
-                $loanCreated = $insertLoan->execute([$req['id_siswa'], $req['id_item'], $tgl_pinjam, $batas_waktu]);
+                $loanCreated = $loanObj->createLoanWithDueDate($req['id_siswa'], $req['id_item'], $batas_waktu);
                 if ($loanCreated) {
-                    $itemObj = new Item();
-                    $itemObj->updateStatus($req['id_item'], 'dipinjam');
+                    // Hapus request karena sudah diproses menjadi peminjaman
+                    $this->deleteRequest($requestId);
                     $log = new Log();
                     $log->add($petugasId, 'Setujui Request', "Request ID $requestId, siswa {$req['id_siswa']}, item {$req['id_item']}, batas waktu $batas_waktu");
+                    return true;
                 }
-                return $loanCreated;
             }
+            return false;
         }
         return $result;
     }

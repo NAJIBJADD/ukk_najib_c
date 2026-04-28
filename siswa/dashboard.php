@@ -27,7 +27,7 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
 
 <div class="container mt-4">
     <div class="row g-4">
-        <!-- Kolom Kiri: QR Code Identitas - untuk tablet: 5 kolom, untuk desktop: 4 kolom -->
+        <!-- Kolom Kiri: QR Code Identitas -->
         <div class="col-12 col-md-5 col-lg-4">
             <div class="card shadow mb-4">
                 <div class="card-header bg-info text-white">
@@ -56,7 +56,7 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
             </div>
         </div>
 
-        <!-- Kolom Kanan: Riwayat Peminjaman - untuk tablet: 7 kolom, untuk desktop: 8 kolom -->
+        <!-- Kolom Kanan: Riwayat Peminjaman -->
         <div class="col-12 col-md-7 col-lg-8">
             <div class="card shadow mb-4">
                 <div class="card-header bg-success text-white d-flex flex-wrap justify-content-between align-items-center">
@@ -76,7 +76,7 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
                                     <th>Batas Waktu</th>
                                     <th>Status</th>
                                     <th>Denda</th>
-                                </tr>
+                                <tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($loans as $loan): 
@@ -88,8 +88,8 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
                                     <tr class="<?= $is_late ? 'table-danger' : '' ?>">
                                         <td><?= htmlspecialchars($loan['nama_item']) ?></td>
                                         <td><?= htmlspecialchars($kategori) ?></td>
-                                        <td><?= $loan['tgl_pinjam'] ?></td>
-                                        <td><?= $loan['batas_waktu'] ?></td>
+                                        <td><?= time_elapsed_string($loan['tgl_pinjam']) ?></td>
+                                        <td><?= time_elapsed_string($loan['batas_waktu']) ?></td>
                                         <td><span class="badge bg-<?= $badge ?>"><?= strtoupper($loan['status']) ?></span></td>
                                         <td>Rp <?= number_format($loan['denda'], 0, ',', '.') ?></td>
                                     </tr>
@@ -105,49 +105,46 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
                 </div>
             </div>
 
-            <!-- Riwayat Permintaan (Termasuk Ditolak) -->
+            <!-- Riwayat Permintaan (Hanya Pending & Ditolak, karena Disetujui langsung dihapus) -->
             <div class="card shadow">
                 <div class="card-header bg-warning text-dark">
                     <h4><i class="fas fa-envelope"></i> Riwayat Permintaan Peminjaman</h4>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped align-middle">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Barang</th>
-                                    <th>Kategori</th>
-                                    <th>Tgl Request</th>
-                                    <th>Status</th>
-                                    <th>Catatan / Alasan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($requests as $req): 
-                                    $item = $itemObj->getItemById($req['id_item']);
-                                    $kategori = $item['kategori'] ?? '-';
-                                    $status_badge = '';
-                                    if ($req['status'] == 'pending') $status_badge = 'warning';
-                                    elseif ($req['status'] == 'disetujui') $status_badge = 'success';
-                                    else $status_badge = 'danger';
-                                ?>
+                    <?php if (empty($requests)): ?>
+                        <div class="alert alert-info">Belum ada permintaan.</div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped align-middle">
+                                <thead class="table-dark">
                                     <tr>
-                                        <td><?= htmlspecialchars($req['nama_item']) ?></td>
-                                        <td><?= htmlspecialchars($kategori) ?></td>
-                                        <td><?= $req['tgl_request'] ?></td>
-                                        <td><span class="badge bg-<?= $status_badge ?>"><?= strtoupper($req['status']) ?></span></td>
-                                        <td><?= htmlspecialchars($req['catatan'] ?: '-') ?></td>
+                                        <th>Barang</th>
+                                        <th>Kategori</th>
+                                        <th>Tgl Request</th>
+                                        <th>Status</th>
+                                        <th>Catatan / Alasan</th>
                                     </tr>
-                                <?php endforeach; ?>
-                                <?php if (empty($requests)): ?>
-                                    <tr>
-                                        <td colspan="5" class="text-center">Belum ada permintaan</span>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <small class="text-muted fst-italic">* Permintaan yang ditolak tidak dikenakan denda. Denda hanya berlaku pada peminjaman yang sudah disetujui dan terlambat/rusak/hilang.</small>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($requests as $req): 
+                                        $item = $itemObj->getItemById($req['id_item']);
+                                        $kategori = $item['kategori'] ?? '-';
+                                        $status_badge = ($req['status'] == 'pending') ? 'warning' : 'danger';
+                                        $status_text = ($req['status'] == 'pending') ? 'PENDING' : 'DITOLAK';
+                                    ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($req['nama_item']) ?></td>
+                                            <td><?= htmlspecialchars($kategori) ?></td>
+                                            <td><?= time_elapsed_string($req['tgl_request']) ?></td>
+                                            <td><span class="badge bg-<?= $status_badge ?>"><?= $status_text ?></span></td>
+                                            <td><?= htmlspecialchars($req['catatan'] ?: '-') ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted fst-italic">* Permintaan yang ditolak tidak dikenakan denda. Permintaan yang disetujui otomatis menjadi peminjaman dan dihapus dari daftar ini.</small>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -227,15 +224,30 @@ $requests = $requestObj->getRequestsByStudent($siswaId);
 </script>
 
 <style>
+/* Semua badge harus teks putih */
+.badge.bg-warning,
+.badge.bg-danger,
+.badge.bg-success,
+.badge.bg-info,
+.badge.bg-secondary,
+.badge.bg-primary {
+    color: #fff !important;
+}
+
+/* Alert peringatan: teks putih */
+.blink-red {
+    color: white !important;
+}
+@keyframes blink {
+    0% { background-color: #f8d7da; }
+    50% { background-color: #dc3545; }
+    100% { background-color: #f8d7da; }
+}
 .blink-red {
     animation: blink 0.8s infinite;
 }
-@keyframes blink {
-    0% { background-color: #f8d7da; color: black; }
-    50% { background-color: #dc3545; color: white; }
-    100% { background-color: #f8d7da; color: black; }
-}
-/* Tambahan untuk responsif QR code di modal */
+
+/* Responsif QR di modal */
 @media (max-width: 576px) {
     #qrBig canvas {
         max-width: 100%;
